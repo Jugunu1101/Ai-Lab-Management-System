@@ -1,0 +1,109 @@
+const assignmentService = require("./assignment.service");
+
+const createAssignment = async (req, res, next) => {
+  try {
+    const assignment = await assignmentService.createAssignment({
+      ...req.body,
+      teacherId: req.user.userId,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: assignment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAssignments = async (req, res, next) => {
+  try {
+    const assignments = await assignmentService.getAssignments({
+      userId: req.user.userId,
+      role: req.user.role,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: assignments,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAssignmentById = async (req, res, next) => {
+  try {
+    const assignment = await assignmentService.getAssignmentById({
+      assignmentId: req.params.assignmentId,
+      userId: req.user.userId,
+      role: req.user.role,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: assignment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateAssignment = async (req, res, next) => {
+  try {
+    const assignment = await assignmentService.updateAssignment({
+      assignmentId: req.params.assignmentId,
+      teacherId: req.user.userId,
+      updates: req.body,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: assignment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteAssignment = async (req, res, next) => {
+  try {
+    const assignment = await assignmentService.deleteAssignment({
+      assignmentId: req.params.assignmentId,
+      teacherId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Assignment deleted successfully",
+      data: assignment,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getAssignmentResults = async (req, res, next) => {
+  try {
+    const results = await assignmentService.getAssignmentResults({
+      assignmentId: req.params.assignmentId,
+      teacherId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: results,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  createAssignment,
+  getAssignments,
+  getAssignmentById,
+  updateAssignment,
+  deleteAssignment,
+  getAssignmentResults,
+};

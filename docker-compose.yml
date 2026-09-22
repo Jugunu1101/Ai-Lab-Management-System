@@ -1,0 +1,125 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: programming-lab-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=ai-lab
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - lab-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: programming-lab-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - lab-network
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: programming-lab-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - AI_MOCK_MODE=${AI_MOCK_MODE:-true}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - AI_ANALYSIS_MODEL=${AI_ANALYSIS_MODEL:-gpt-4o-mini}
+      - AI_QUIZ_MODEL=${AI_QUIZ_MODEL:-gpt-4o-mini}
+      - AI_REPORT_MODEL=${AI_REPORT_MODEL:-gpt-4o}
+      - AI_LEARNING_PATH_MODEL=${AI_LEARNING_PATH_MODEL:-gpt-4o-mini}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - lab-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: programming-lab-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/programming_lab}
+      - MONGODB_DB_NAME=ai-lab
+      - REDIS_URL=redis://redis:6379
+      - AI_SERVICE_URL=http://ai-service:8000
+      - JWT_SECRET=${JWT_SECRET:-0087da057c761317f0eb87d3473d6aef3d4fbefbc0acc7b29f6cacaec29ab016}
+      - JWT_EXPIRES_IN=1d
+      - CORS_ORIGIN=*
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - lab-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: programming-lab-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - lab-network
+
+volumes:
+  mongo_data:
+  redis_data:
+
+networks:
+  lab-network:
+    driver: bridge

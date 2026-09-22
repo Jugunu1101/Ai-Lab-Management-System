@@ -1,0 +1,28 @@
+from pydantic import BaseModel, Field
+from typing import List
+
+from app.schemas.common import AIMetadata
+
+
+class TopicMasteryInput(BaseModel):
+    topic: str
+    score: int = Field(ge=0, le=100)
+
+
+class LearningPathRequest(BaseModel):
+    studentId: str
+    language: str
+    mastery: List[TopicMasteryInput]
+    weakTopics: List[str]
+
+
+class LearningStep(BaseModel):
+    step: int = Field(ge=1)
+    topic: str
+    objective: str
+    activities: List[str]
+
+
+class LearningPathResponse(AIMetadata):
+    learningPath: List[LearningStep]
+    summary: str

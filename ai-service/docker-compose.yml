@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  ai-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-service
+    ports:
+      # Port 8000 is exposed to the host for local development/debugging only.
+      # The JS backend in a separate container should communicate via internal Docker network: http://ai-service:8000
+      - "8000:8000"
+    environment:
+      # Use mock mode for local Compose testing by default
+      - AI_MOCK_MODE=true
+      # Note: OPENAI_API_KEY should be passed at runtime or via an external override file in production, NEVER committed here.
+    healthcheck:
+      # Python container runs healthcheck natively inside Dockerfile, but can be restated or left to image defaults.
+      # Repeating here for clarity to the JS team.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+# -------------------------------------------------------------------------
+# JS BACKEND INTEGRATION NOTE:
+# 
+# The JS backend is expected to be maintained in a separate repository or 
+# directory. When adding the JS backend to a unified Docker Compose network,
+# it must:
+# 
+# 1. Be on the same network as `ai-service` (default bridge network is fine if in same file).
+# 2. Set its environment variable `AI_SERVICE_URL=http://ai-service:8000`.
+# 3. Add a `depends_on` block linking to `ai-service` with `condition: service_healthy`.
+#
+# Example JS Backend Compose snippet:
+#
+# js-backend:
+#   build: ./js-backend
+#   environment:
+#     - AI_SERVICE_URL=http://ai-service:8000
+#   depends_on:
+#     ai-service:
+#       condition: service_healthy
+# -------------------------------------------------------------------------
