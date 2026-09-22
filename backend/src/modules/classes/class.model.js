@@ -59,4 +59,9 @@ const classSchema = new mongoose.Schema(
   }
 );
 
+// Performance indexes
+classSchema.index({ teacherId: 1 });
+classSchema.index({ students: 1 });
+classSchema.index({ collegeId: 1, teacherId: 1 });
+
 module.exports = mongoose.model("Class", classSchema);

@@ -164,4 +164,10 @@ const submissionSchema = new mongoose.Schema(
   },
 );
 
+// Performance indexes
+submissionSchema.index({ userId: 1, createdAt: -1 });
+submissionSchema.index({ assignmentId: 1, createdAt: -1 });
+submissionSchema.index({ userId: 1, assignmentId: 1 });
+submissionSchema.index({ status: 1 });
+
 module.exports = mongoose.model("Submission", submissionSchema);

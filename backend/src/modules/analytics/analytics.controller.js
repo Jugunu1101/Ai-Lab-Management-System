@@ -47,8 +47,25 @@ const getClassTopicAnalytics = async (req, res, next) => {
   }
 };
 
+const getStudentAnalyticsById = async (req, res, next) => {
+  try {
+    const analytics = await analyticsService.getStudentAnalyticsById({
+      studentId: req.params.studentId,
+      teacherId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: analytics,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getStudentAnalytics,
   getClassAnalytics,
   getClassTopicAnalytics,
+  getStudentAnalyticsById,
 };

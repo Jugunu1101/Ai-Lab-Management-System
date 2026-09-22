@@ -44,6 +44,13 @@ router.get(
 );
 
 router.get(
+  "/student/:studentId",
+  authenticate,
+  authorize("TEACHER", "ADMIN"),
+  submissionController.getSubmissionsByStudent
+);
+
+router.get(
   "/:submissionId",
   authenticate,
   authorize("STUDENT"),

@@ -93,4 +93,9 @@ const assignmentSchema = new mongoose.Schema(
   }
 );
 
+// Performance indexes
+assignmentSchema.index({ classId: 1, createdAt: -1 });
+assignmentSchema.index({ createdBy: 1 });
+assignmentSchema.index({ deadline: 1 });
+
 module.exports = mongoose.model("Assignment", assignmentSchema);

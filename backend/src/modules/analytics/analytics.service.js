@@ -185,8 +185,29 @@ const getClassTopicAnalytics = async ({ classId, teacherId }) => {
   };
 };
 
+const getStudentAnalyticsById = async ({ studentId, teacherId }) => {
+  // Verify teacher has access to this student (student must be in one of teacher's classes)
+  const classes = await Class.find({
+    teacherId,
+    students: studentId,
+  }).select("_id");
+
+  if (classes.length === 0) {
+    const error = new Error(
+      "Student not found in any of your classes"
+    );
+    error.statusCode = 404;
+    error.code = "STUDENT_NOT_FOUND";
+    throw error;
+  }
+
+  // Reuse the existing analytics function
+  return getStudentAnalytics({ studentId });
+};
+
 module.exports = {
   getStudentAnalytics,
   getClassAnalytics,
   getClassTopicAnalytics,
+  getStudentAnalyticsById,
 };

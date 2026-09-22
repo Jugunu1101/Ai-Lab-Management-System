@@ -106,10 +106,27 @@ const getSubmissionDetailsForTeacher = async (
   }
 };
 
+const getSubmissionsByStudent = async (req, res, next) => {
+  try {
+    const submissions = await submissionService.getSubmissionsByStudent({
+      studentId: req.params.studentId,
+      teacherId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: submissions,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createSubmission,
   getSubmissions,
   getSubmissionById,
   getAssignmentSubmissions,
   getSubmissionDetailsForTeacher,
+  getSubmissionsByStudent,
 };

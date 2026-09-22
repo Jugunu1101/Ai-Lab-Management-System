@@ -362,6 +362,43 @@ const executeSubmission = async ({ submissionId }) => {
   }
 };
 
+const getSubmissionsByStudent = async ({ studentId, teacherId }) => {
+  // Find all classes taught by this teacher that include this student
+  const classes = await Class.find({
+    teacherId,
+    students: studentId,
+  }).select("_id");
+
+  if (classes.length === 0) {
+    const error = new Error(
+      "Student not found in any of your classes"
+    );
+    error.statusCode = 404;
+    error.code = "STUDENT_NOT_FOUND";
+    throw error;
+  }
+
+  const classIds = classes.map((c) => c._id);
+
+  // Find all assignments for these classes
+  const assignments = await Assignment.find({
+    classId: { $in: classIds },
+  }).select("_id title classId");
+
+  const assignmentIds = assignments.map((a) => a._id);
+
+  // Get all submissions from this student for these assignments
+  const submissions = await Submission.find({
+    userId: studentId,
+    assignmentId: { $in: assignmentIds },
+  })
+    .populate("assignmentId", "title description language difficulty classId")
+    .select("assignmentId language status score createdAt updatedAt attemptNumber")
+    .sort({ createdAt: -1 });
+
+  return submissions;
+};
+
 module.exports = {
   createSubmission,
   getSubmissions,
@@ -369,4 +406,5 @@ module.exports = {
   getAssignmentSubmissions,
   getSubmissionDetailsForTeacher,
   executeSubmission,
+  getSubmissionsByStudent,
 };
