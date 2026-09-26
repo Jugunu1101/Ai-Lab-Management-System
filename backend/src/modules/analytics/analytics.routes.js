@@ -21,6 +21,13 @@ router.get(
 );
 
 router.get(
+  "/student/:studentId/profile",
+  authenticate,
+  authorize("TEACHER", "ADMIN"),
+  analyticsController.getStudentProfileById,
+);
+
+router.get(
   "/class/:classId",
   authenticate,
   authorize("TEACHER"),

@@ -23,6 +23,14 @@ router.get(
   quizController.getTodayQuiz
 );
 
+// On-demand AI topic practice quiz
+router.get(
+  "/practice",
+  authenticate,
+  authorize(["STUDENT", "ADMIN"]),
+  quizController.getPracticeQuiz
+);
+
 // List available quizzes
 router.get(
   "/",

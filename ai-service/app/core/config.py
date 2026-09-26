@@ -14,13 +14,13 @@ class Settings(BaseSettings):
     AI_BASE_URL: str = ""
     
     AI_MOCK_MODE: bool = False
-    AI_ANALYSIS_MODEL: str = "gemini-3.6-flash"
-    AI_QUIZ_MODEL: str = "gemini-3.6-flash"
-    AI_REPORT_MODEL: str = "gemini-3.6-flash"
-    AI_LEARNING_PATH_MODEL: str = "gemini-3.6-flash"
-    
-    AI_REQUEST_TIMEOUT: int = 60
-    AI_MAX_RETRIES: int = 3
+    AI_ANALYSIS_MODEL: str = "gemini-3.1-flash-lite"
+    AI_QUIZ_MODEL: str = "gemini-3.1-flash-lite"
+    AI_REPORT_MODEL: str = "gemini-3.1-flash-lite"
+    AI_LEARNING_PATH_MODEL: str = "gemini-3.1-flash-lite"
+
+    AI_REQUEST_TIMEOUT: int = 30
+    AI_MAX_RETRIES: int = 2
     
     AI_RATE_LIMIT: int = 30
     AI_RATE_WINDOW_SECONDS: int = 60

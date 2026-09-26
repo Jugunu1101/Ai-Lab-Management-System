@@ -74,4 +74,6 @@ const quizSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+quizSchema.index({ studentId: 1, language: 1, createdAt: -1 });
+
 module.exports = mongoose.model("Quiz", quizSchema);

@@ -35,8 +35,8 @@ def test_generate_learning_path():
 
     data = response.json()
 
-    assert "learningPath" in data
-    assert len(data["learningPath"]) > 0
+    assert "steps" in data
+    assert len(data["steps"]) > 0
     assert "summary" in data
     assert "model" in data
     assert "promptVersion" in data

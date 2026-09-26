@@ -35,6 +35,23 @@ const getTodayQuiz = async (req, res, next) => {
   }
 };
 
+const getPracticeQuiz = async (req, res, next) => {
+  try {
+    const result = await quizService.getPracticeQuiz({
+      studentId: req.user.userId,
+      language: req.query.language,
+      topic: req.query.topic,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const submitQuiz = async (req, res, next) => {
   try {
     const attempt = await quizService.submitQuiz({
@@ -102,6 +119,7 @@ const getQuizById = async (req, res, next) => {
 module.exports = {
   createQuiz,
   getTodayQuiz,
+  getPracticeQuiz,
   submitQuiz,
   getQuizzes,
   getQuizAttempts,

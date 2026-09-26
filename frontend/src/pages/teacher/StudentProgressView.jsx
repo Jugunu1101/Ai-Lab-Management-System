@@ -40,21 +40,38 @@ export const StudentProgressView = () => {
       setLoading(true);
       setError(null);
       try {
-        // Attempt to fetch real user & progress data
-        const res = await api.get(`/admin/users/${id}`).catch(() => null);
-        const userData = res?.data?.user || res?.data || null;
+        const [profileRes, analyticsRes] = await Promise.allSettled([
+          api.get(`/analytics/student/${id}/profile`),
+          api.get(`/analytics/student/${id}`)
+        ]);
+
+        const userData = profileRes.status === "fulfilled" ? (profileRes.value.data || profileRes.value.user || null) : null;
+        const analyticsData = analyticsRes.status === "fulfilled" ? (analyticsRes.value.data || null) : null;
 
         if (userData && (userData.name || userData.email)) {
+          let overallScore = 0;
+          let topicScores = [];
+          
+          if (analyticsData) {
+            overallScore = analyticsData.averageMasteryScore || 0;
+            // Use allTopics for the chart, but filter weakTopics for interventions
+            const sourceTopics = analyticsData.allTopics || analyticsData.weakTopics || [];
+            topicScores = sourceTopics.map(t => ({
+              topic: t.topic,
+              score: t.masteryScore
+            }));
+          }
+
           setStudent({
             _id: id,
             name: userData.name || "Student",
             email: userData.email || "",
             collegeId: userData.collegeId || "—",
             department: userData.department || "—",
-            overallScore: 0,
-            status: "NORMAL",
-            interventionsNeeded: [],
-            topicScores: [],
+            overallScore: overallScore,
+            status: overallScore < 50 && overallScore > 0 ? "AT_RISK" : "NORMAL",
+            interventionsNeeded: topicScores.filter(t => t.score < 50).map(t => `Needs review on ${t.topic}`),
+            topicScores: topicScores,
           });
         } else {
           setError("Student record not found");

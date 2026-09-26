@@ -22,6 +22,8 @@ import {
   EyeOutlined,
   LeftOutlined,
   CopyOutlined,
+  KeyOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorState from "../../components/shared/ErrorState";
@@ -114,8 +116,15 @@ export const ClassDetailsPage = () => {
       title: "Overall Mastery",
       dataIndex: "score",
       key: "score",
-      render: (score) => {
-        const val = score || 0;
+      render: (score, record) => {
+        if (!record.hasMasteryData && score === null) {
+          return (
+            <Tag style={{ fontWeight: 600, borderRadius: 6, color: "var(--text-muted)", background: "var(--bg-tertiary)" }}>
+              No data yet
+            </Tag>
+          );
+        }
+        const val = score ?? 0;
         const color = val >= 70 ? "success" : val >= 50 ? "warning" : "error";
         return (
           <Tag color={color} style={{ fontWeight: 700, borderRadius: 6 }}>
@@ -167,19 +176,88 @@ export const ClassDetailsPage = () => {
           </div>
 
           <Space>
-            <Button icon={<CopyOutlined />} onClick={copyInviteCode}>
-              Copy Code: {cls?.code}
-            </Button>
             <Button
               type="primary"
               icon={<UserAddOutlined />}
               onClick={() => setAddStudentModal(true)}
             >
-              Enroll Student
+              Manual Enroll
             </Button>
           </Space>
         </div>
       </div>
+
+      {/* Classroom Join Code Card */}
+      <Card
+        className="glass-card"
+        bordered={false}
+        style={{
+          marginBottom: 20,
+          background: "linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.03) 100%)",
+          border: "1px solid rgba(99, 102, 241, 0.2)",
+          borderRadius: 12,
+        }}
+        bodyStyle={{ padding: "18px 24px" }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 10,
+                background: "var(--primary, #6366f1)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                fontSize: 20,
+              }}
+            >
+              <KeyOutlined />
+            </div>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Text style={{ fontSize: 13, fontWeight: 600, color: "var(--text-secondary)" }}>
+                  STUDENT JOIN CODE
+                </Text>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 2 }}>
+                <span
+                  style={{
+                    fontSize: 22,
+                    fontWeight: 800,
+                    letterSpacing: 3,
+                    fontFamily: "monospace",
+                    color: "var(--primary, #6366f1)",
+                    background: "rgba(99, 102, 241, 0.1)",
+                    padding: "2px 10px",
+                    borderRadius: 6,
+                  }}
+                >
+                  {cls?.code || "N/A"}
+                </span>
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={copyInviteCode}
+                  style={{ borderRadius: 6, fontWeight: 600 }}
+                >
+                  Copy Code
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ maxWidth: 360 }}>
+            <Text type="secondary" style={{ fontSize: 12, display: "flex", alignItems: "center", gap: 6 }}>
+              <InfoCircleOutlined style={{ color: "var(--primary)" }} />
+              <span>
+                Students can join directly by entering this code on their <strong>Join Class</strong> page.
+              </span>
+            </Text>
+          </div>
+        </div>
+      </Card>
 
       {/* Tabs */}
       <Card className="glass-card" bordered={false} bodyStyle={{ padding: "16px 24px" }}>

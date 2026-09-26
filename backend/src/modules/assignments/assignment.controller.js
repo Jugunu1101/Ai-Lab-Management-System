@@ -16,11 +16,33 @@ const createAssignment = async (req, res, next) => {
   }
 };
 
+const generateAIAssignment = async (req, res, next) => {
+  try {
+    const generated = await assignmentService.generateAIAssignment({
+      topic: req.body.topic,
+      language: req.body.language,
+      difficulty: req.body.difficulty,
+      questionCount: req.body.questionCount,
+      classId: req.body.classId,
+      teacherId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: generated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const getAssignments = async (req, res, next) => {
   try {
     const assignments = await assignmentService.getAssignments({
       userId: req.user.userId,
       role: req.user.role,
+      limit: req.query.limit,
+      page: req.query.page,
     });
 
     return res.status(200).json({
@@ -101,6 +123,7 @@ const getAssignmentResults = async (req, res, next) => {
 
 module.exports = {
   createAssignment,
+  generateAIAssignment,
   getAssignments,
   getAssignmentById,
   updateAssignment,

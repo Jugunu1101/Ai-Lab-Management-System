@@ -1,0 +1,172 @@
+/* ==========================================================================
+   CODELAB AI — SIDEBAR STYLESHEET
+   Dark green (#123C2A), Forest green (#246B45), Cream (#F8F6EE), Yellow (#F4C542)
+   ========================================================================== */
+
+.cl-sidebar {
+  background: var(--cl-cream, #F8F6EE) !important;
+  border-right: 1px solid var(--cl-border, #DDE5DC) !important;
+  transition: all 0.25s ease !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+}
+
+.cl-sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  justify-content: space-between;
+  padding: 16px 12px;
+  box-sizing: border-box;
+}
+
+.cl-sidebar-logo-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  text-decoration: none;
+}
+
+.cl-sidebar-logo-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--cl-green-primary, #123C2A);
+  color: var(--cl-yellow, #F4C542);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.cl-sidebar-logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.cl-sidebar-logo-title {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--cl-text, #18231D);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.cl-sidebar-logo-subtitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cl-text-secondary, #5F6B63);
+  letter-spacing: 0.01em;
+}
+
+/* Ant Menu Overrides inside Sidebar */
+.cl-sidebar .ant-menu {
+  background: transparent !important;
+  border-right: none !important;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cl-sidebar .ant-menu-item {
+  height: 46px !important;
+  line-height: 46px !important;
+  border-radius: 14px !important;
+  margin: 0 !important;
+  width: 100% !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  color: var(--cl-text-secondary, #5F6B63) !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.15s ease !important;
+}
+
+.cl-sidebar .ant-menu-item .ant-menu-item-icon {
+  font-size: 18px !important;
+  color: inherit !important;
+}
+
+.cl-sidebar .ant-menu-item:hover {
+  background: var(--cl-green-light, #EDF6EA) !important;
+  color: var(--cl-green-primary, #123C2A) !important;
+}
+
+/* Active navigation item: Dark Green, White Text */
+.cl-sidebar .ant-menu-item-selected {
+  background: var(--cl-green-primary, #123C2A) !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px rgba(18, 60, 42, 0.22) !important;
+}
+
+.cl-sidebar .ant-menu-item-selected .ant-menu-item-icon {
+  color: var(--cl-yellow, #F4C542) !important;
+}
+
+/* Sidebar Bottom Profile Card */
+.cl-sidebar-bottom-profile {
+  margin-top: auto;
+  padding: 12px 14px;
+  background: #FFFFFF;
+  border: 1px solid var(--cl-border, #DDE5DC);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cl-sidebar-bottom-profile:hover {
+  border-color: var(--cl-green-forest, #246B45);
+  box-shadow: 0 4px 12px rgba(18, 60, 42, 0.08);
+}
+
+.cl-sb-profile-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.cl-sb-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--cl-green-primary, #123C2A);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cl-sb-profile-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cl-sb-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cl-text, #18231D);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cl-sb-role {
+  font-size: 11px;
+  color: var(--cl-text-secondary, #5F6B63);
+  font-weight: 500;
+}

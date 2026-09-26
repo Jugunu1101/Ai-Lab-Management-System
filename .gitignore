@@ -1,42 +1,148 @@
-# Dependencies
-node_modules/
-venv/
-env/
-ENV/
-*.egg-info/
-dist/
-build/
+# ==============================================================================
+# Git Ignore Configuration — AI-Powered Programming Lab Management Platform
+# ==============================================================================
 
-# Python cache
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-*.so
-.Python
+# ------------------------------------------------------------------------------
+# 1. ENVIRONMENT VARIABLES & SECRETS (STRICT SECURITY)
+# ------------------------------------------------------------------------------
+.env
+.env.*
+*.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+.env.staging
 
-# Node
+# Explicit subfolder .env exclusions
+/backend/.env
+/backend/.env.*
+/frontend/.env
+/frontend/.env.*
+/ai-service/.env
+/ai-service/.env.*
+
+# Allow only example/template configurations to be tracked
+!.env.example
+!.env.production.example
+!*.env.example
+!*/*.env.example
+!/backend/.env.example
+!/frontend/.env.example
+!/ai-service/.env.example
+
+# ------------------------------------------------------------------------------
+# 2. CREDENTIALS, AUTH TOKENS, CERTIFICATES & SECRETS
+# ------------------------------------------------------------------------------
+*token*.json
+tokens.json
+credentials.json
+client_secret*.json
+serviceAccountKey*.json
+*secret*.json
+id_rsa*
+id_ed25519*
+*.pem
+*.key
+*.crt
+*.cer
+*.pfx
+*.p12
+*.pub
+secrets/
+certs/
+ssl/
+private/
+
+# ------------------------------------------------------------------------------
+# 3. LOAD TESTS, BENCHMARK RESULTS & TOKENS
+# ------------------------------------------------------------------------------
+/load-tests/tokens.json
+/load-tests/*-results.json
+/load-tests/node_modules/
+
+# ------------------------------------------------------------------------------
+# 4. AD-HOC / SCRATCH TEST SCRIPTS (CONTAINING TEST CREDENTIALS OR LOCAL RUNNERS)
+# ------------------------------------------------------------------------------
+/test-executor.js
+/test_auth.js
+/test_docker.js
+/test_exec.js
+/backend/approve-all-teachers.js
+/backend/fix-assignment.js
+/backend/run-e2e.js
+/backend/test-ai-agent-student-flow.js
+/backend/test-api-fixed.js
+/backend/test-e2e-demo.js
+/backend/test-e2e-teacher.js
+/backend/test-full-qa.js
+/backend/test-teacher-approval.js
+/frontend/capture-details.cjs
+/frontend/capture-screenshots-after.cjs
+/frontend/capture-screenshots.cjs
+
+# ------------------------------------------------------------------------------
+# 5. LOGS, DUMPS & TEST OUTPUTS
+# ------------------------------------------------------------------------------
+*.log
+logs/
+/backend/jest_out*.txt
+jest_out*.txt
+*_out.txt
+*_out*.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 lerna-debug.log*
-.pnpm-debug.log*
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-.env.production
+# ------------------------------------------------------------------------------
+# 6. TESTING & COVERAGE
+# ------------------------------------------------------------------------------
+coverage/
+/backend/coverage/
+*.cover
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+.hypothesis/
+nosetests.xml
+test-results/
+junit.xml
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
+# ------------------------------------------------------------------------------
+# 7. DEPENDENCIES & VIRTUAL ENVIRONMENTS
+# ------------------------------------------------------------------------------
+node_modules/
+/backend/node_modules/
+/frontend/node_modules/
+/load-tests/node_modules/
+venv/
+ENV/
+env/
+.venv/
+.pyenv/
+/ai-service/venv/
+*.egg-info/
 
-# Build outputs
+# ------------------------------------------------------------------------------
+# 8. PYTHON CACHE & COMPILED FILES
+# ------------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+/ai-service/__pycache__/
+/ai-service/.pytest_cache/
+
+# ------------------------------------------------------------------------------
+# 9. BUILD ARTIFACTS & CACHES
+# ------------------------------------------------------------------------------
 dist/
 build/
 *.dist
@@ -45,82 +151,66 @@ out/
 .nuxt/
 .vite/
 .cache/
+/frontend/dist/
+/frontend/build/
+/frontend/.vite/
+/backend/dist/
+/backend/build/
 
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# ------------------------------------------------------------------------------
+# 10. DATABASE DUMPS & LOCAL PERSISTENT STORAGE
+# ------------------------------------------------------------------------------
+data/
+mongo_data/
+mongo_prod_data/
+redis_data/
+redis_prod_data/
+dump.rdb
+*.mongodb
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.dump
 
-# Testing
-coverage/
-*.cover
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
-.pytest_cache/
-nosetests.xml
-test-results/
-junit.xml
-
-# OS
-Thumbs.db
-.DS_Store
-.AppleDouble
-.LSOverride
-._*
-
-# Temporary files
+# ------------------------------------------------------------------------------
+# 11. USER UPLOADS & TEMPORARY FILES
+# ------------------------------------------------------------------------------
+uploads/
+/backend/uploads/
+/public/uploads/
+tmp/
+temp/
 *.tmp
 *.temp
 *.bak
-*.swp
-*.swo
 .~lock.*
 
-# Docker
-.dockerignore
+# ------------------------------------------------------------------------------
+# 12. SCREENSHOTS & GENERATED MEDIA (KEEP APP ASSETS)
+# ------------------------------------------------------------------------------
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.webp
+!frontend/src/assets/**
+!frontend/public/**
 
-# MongoDB
-data/
-*.mongodb
-
-# Redis
-dump.rdb
-
-# Compiled files
-*.com
-*.class
-*.dll
-*.exe
-*.o
-*.so
-
-# Package files
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# Virtual environments
-venv/
-ENV/
-env/
-.venv
-.pyenv
-
-# IDEs and editors
+# ------------------------------------------------------------------------------
+# 13. IDE & OPERATING SYSTEM FILES
+# ------------------------------------------------------------------------------
 .vscode/
 .idea/
+.cursor/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+.AppleDouble
+.LSOverride
+._*
 *.sublime-project
 *.sublime-workspace
 .project
@@ -130,33 +220,7 @@ env/
 *.ipr
 *.iws
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# Cython debug symbols
-cython_debug/
-
-# Frontend
-/frontend/dist
-/frontend/build
-/frontend/.vite
-/frontend/node_modules
-
-# Backend
-/backend/node_modules
-/backend/dist
-/backend/build
-
-# AI Service
-/ai-service/venv
-/ai-service/__pycache__
-/ai-service/.pytest_cache
+# ------------------------------------------------------------------------------
+# 14. DOCKER & CONTAINER GENERATED
+# ------------------------------------------------------------------------------
+.dockerignore

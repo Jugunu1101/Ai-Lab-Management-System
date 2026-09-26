@@ -16,6 +16,7 @@ import RegisterPage from "../pages/auth/RegisterPage";
 // Student Pages
 import StudentDashboard from "../pages/student/StudentDashboard";
 import StudentClassesPage from "../pages/student/StudentClassesPage";
+import JoinClassPage from "../pages/student/JoinClassPage";
 import AssignmentList from "../pages/student/AssignmentList";
 import AssignmentDetails from "../pages/student/AssignmentDetails";
 import SubmissionHistory from "../pages/student/SubmissionHistory";
@@ -63,11 +64,15 @@ export const AppRoutes = () => {
       >
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route path="/student/classes" element={<StudentClassesPage />} />
+        <Route path="/student/join-class" element={<JoinClassPage />} />
         <Route path="/student/assignments" element={<AssignmentList />} />
         <Route path="/student/assignments/:id" element={<AssignmentDetails />} />
         <Route path="/student/submissions" element={<SubmissionHistory />} />
         <Route path="/student/progress" element={<ProgressDashboard />} />
+        <Route path="/student/topic-mastery" element={<ProgressDashboard />} />
+        <Route path="/student/practice" element={<AssignmentList />} />
         <Route path="/student/quiz" element={<TodayQuizPage />} />
+        <Route path="/student/daily-quiz" element={<TodayQuizPage />} />
         <Route path="/student/learning-path" element={<LearningPathPage />} />
       </Route>
 

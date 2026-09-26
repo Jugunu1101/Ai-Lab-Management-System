@@ -52,6 +52,14 @@ const getStudentAnalytics = async ({ studentId }) => {
       masteryScore: item.masteryScore,
     }));
 
+  const allTopics = progress
+    .sort((a, b) => b.masteryScore - a.masteryScore)
+    .map((item) => ({
+      language: item.language,
+      topic: item.topic,
+      masteryScore: item.masteryScore,
+    }));
+
   return {
     totalAssignments,
     averageAssignmentScore,
@@ -59,6 +67,7 @@ const getStudentAnalytics = async ({ studentId }) => {
     averageQuizScore,
     averageMasteryScore,
     weakTopics,
+    allTopics,
   };
 };
 
@@ -205,9 +214,37 @@ const getStudentAnalyticsById = async ({ studentId, teacherId }) => {
   return getStudentAnalytics({ studentId });
 };
 
+const getStudentProfileById = async ({ studentId, teacherId, role }) => {
+  // If not admin, verify teacher has access to this student
+  if (role !== "ADMIN") {
+    const classes = await Class.find({
+      teacherId,
+      students: studentId,
+    }).select("_id");
+
+    if (classes.length === 0) {
+      const error = new Error("Student not found in any of your classes");
+      error.statusCode = 404;
+      error.code = "STUDENT_NOT_FOUND";
+      throw error;
+    }
+  }
+
+  const User = require("../users/user.model");
+  const student = await User.findById(studentId).select("name email collegeId department role");
+  if (!student) {
+      const error = new Error("Student not found");
+      error.statusCode = 404;
+      error.code = "STUDENT_NOT_FOUND";
+      throw error;
+  }
+  return student;
+};
+
 module.exports = {
   getStudentAnalytics,
   getClassAnalytics,
   getClassTopicAnalytics,
   getStudentAnalyticsById,
+  getStudentProfileById,
 };

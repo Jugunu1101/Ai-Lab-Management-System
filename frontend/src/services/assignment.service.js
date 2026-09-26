@@ -13,6 +13,10 @@ export const assignmentService = {
     return api.post("/assignments", assignmentData);
   },
 
+  generateAIAssignment: async (params) => {
+    return api.post("/assignments/generate-ai", params);
+  },
+
   updateAssignment: async (assignmentId, data) => {
     return api.put(`/assignments/${assignmentId}`, data);
   },

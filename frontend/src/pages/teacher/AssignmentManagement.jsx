@@ -6,9 +6,11 @@ import {
   EyeOutlined,
   DeleteOutlined,
   FileDoneOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import CreateAssignmentModal from "../../components/teacher/CreateAssignmentModal";
+import GenerateAIAssignmentModal from "../../components/teacher/GenerateAIAssignmentModal";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorState from "../../components/shared/ErrorState";
 import EmptyState from "../../components/shared/EmptyState";
@@ -24,6 +26,7 @@ export const AssignmentManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [aiModalOpen, setAiModalOpen] = useState(false);
 
   const fetchAssignments = async () => {
     setLoading(true);
@@ -62,17 +65,34 @@ export const AssignmentManagement = () => {
       title: "Assignment Title",
       dataIndex: "title",
       key: "title",
-      render: (text) => <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{text}</span>,
+      render: (text, record) => (
+        <div>
+          <span style={{ fontWeight: 600, color: "var(--text-primary)" }}>{text}</span>
+          {record.source === "AI_GENERATED" && (
+            <Tag color="purple" style={{ marginLeft: 8, fontSize: 11, borderRadius: 4 }}>
+              AI Generated
+            </Tag>
+          )}
+          {record.source === "AI_AGENT" && (
+            <Tag color="volcano" style={{ marginLeft: 8, fontSize: 11, borderRadius: 4 }}>
+              AI Practice
+            </Tag>
+          )}
+        </div>
+      ),
     },
     {
       title: "Language",
-      dataIndex: "programmingLanguage",
-      key: "programmingLanguage",
-      render: (lang) => (
-        <Tag color="cyan" style={{ textTransform: "uppercase", borderRadius: 6 }}>
-          {lang || "Multi-Lang"}
-        </Tag>
-      ),
+      dataIndex: "language",
+      key: "language",
+      render: (lang, record) => {
+        const val = lang || record.programmingLanguage || "Multi-Lang";
+        return (
+          <Tag color="cyan" style={{ textTransform: "uppercase", borderRadius: 6 }}>
+            {val}
+          </Tag>
+        );
+      },
     },
     {
       title: "Difficulty",
@@ -99,9 +119,9 @@ export const AssignmentManagement = () => {
     },
     {
       title: "Due Date",
-      dataIndex: "dueDate",
-      key: "dueDate",
-      render: (date) => formatDate(date, true),
+      dataIndex: "deadline",
+      key: "deadline",
+      render: (date, record) => formatDate(date || record.dueDate, true),
     },
     {
       title: "Actions",
@@ -139,14 +159,29 @@ export const AssignmentManagement = () => {
           </Text>
         </div>
 
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => setCreateModalOpen(true)}
-          style={{ borderRadius: 8, fontWeight: 600 }}
-        >
-          Create New Assignment
-        </Button>
+        <Space>
+          <Button
+            icon={<ThunderboltOutlined style={{ color: "#6366f1" }} />}
+            onClick={() => setAiModalOpen(true)}
+            style={{
+              borderRadius: 8,
+              fontWeight: 600,
+              background: "rgba(99, 102, 241, 0.1)",
+              borderColor: "rgba(99, 102, 241, 0.4)",
+              color: "var(--primary, #6366f1)",
+            }}
+          >
+            AI Generate Assignment
+          </Button>
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setCreateModalOpen(true)}
+            style={{ borderRadius: 8, fontWeight: 600 }}
+          >
+            Create New Assignment
+          </Button>
+        </Space>
       </div>
 
       <Card className="glass-card" bordered={false} bodyStyle={{ padding: 0 }}>
@@ -175,6 +210,12 @@ export const AssignmentManagement = () => {
       <CreateAssignmentModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
+        onSuccess={fetchAssignments}
+      />
+
+      <GenerateAIAssignmentModal
+        open={aiModalOpen}
+        onClose={() => setAiModalOpen(false)}
         onSuccess={fetchAssignments}
       />
     </div>

@@ -17,7 +17,12 @@ const analyticsRoutes = require("./modules/analytics/analytics.routes");
 const reportsRoutes = require("./modules/reports/reports.routes");
 const collegeRoutes = require("./modules/colleges/college.routes");
 
+const { requestLogger } = require("./middleware/logger.middleware");
+
 const app = express();
+
+// Structured Logging & Request ID tracking
+app.use(requestLogger);
 
 // Security Headers
 app.use(helmet());
@@ -34,7 +39,8 @@ app.use(
 // Global Rate Limiting
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // limit each IP to 500 requests per window
+  max: process.env.GLOBAL_RATE_LIMIT ? parseInt(process.env.GLOBAL_RATE_LIMIT, 10) : 10000, // Configurable limit for campus traffic
+  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -50,7 +56,8 @@ app.use("/api", globalLimiter);
 // Stricter rate limit for authentication endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30, // 30 login/register attempts per 15 min
+  max: process.env.AUTH_RATE_LIMIT ? parseInt(process.env.AUTH_RATE_LIMIT, 10) : 5000,
+  skip: () => process.env.DISABLE_RATE_LIMIT === "true",
   standardHeaders: true,
   legacyHeaders: false,
   message: {

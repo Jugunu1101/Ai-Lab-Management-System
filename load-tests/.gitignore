@@ -1,0 +1,5 @@
+# Load tests gitignore
+tokens.json
+*-results.json
+node_modules/
+*.log

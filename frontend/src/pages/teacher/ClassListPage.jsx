@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Row, Col, Card, Button, Tag, Typography, Space, Input } from "antd";
+import { Row, Col, Card, Button, Tag, Typography, Space, Input, message } from "antd";
 import {
   TeamOutlined,
   PlusOutlined,
@@ -7,6 +7,8 @@ import {
   UserOutlined,
   ArrowRightOutlined,
   SearchOutlined,
+  CopyOutlined,
+  KeyOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import CreateClassModal from "../../components/teacher/CreateClassModal";
@@ -106,14 +108,39 @@ export const ClassListPage = () => {
                 bodyStyle={{ padding: "24px" }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                  <div>
-                    <Tag color="blue" style={{ fontWeight: 700, borderRadius: 6, fontSize: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Tag
+                      color="purple"
+                      style={{
+                        fontWeight: 800,
+                        borderRadius: 6,
+                        fontSize: 13,
+                        letterSpacing: 1.5,
+                        fontFamily: "monospace",
+                        padding: "2px 8px",
+                      }}
+                    >
+                      <KeyOutlined style={{ marginRight: 4 }} />
                       {cls.code}
                     </Tag>
                     {cls.department && (
                       <Tag style={{ borderRadius: 6, fontSize: 12 }}>{cls.department}</Tag>
                     )}
                   </div>
+
+                  <Button
+                    size="small"
+                    type="text"
+                    icon={<CopyOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(cls.code);
+                      message.success(`Copied code "${cls.code}" to clipboard!`);
+                    }}
+                    style={{ fontSize: 12 }}
+                  >
+                    Copy Code
+                  </Button>
                 </div>
 
                 <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8, color: "var(--text-primary)" }}>

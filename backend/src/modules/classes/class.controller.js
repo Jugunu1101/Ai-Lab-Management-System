@@ -22,6 +22,7 @@ const addStudent = async (req, res, next) => {
     const updatedClass = await classService.addStudentToClass({
       classId: req.params.classId,
       studentId: req.body.studentId,
+      email: req.body.email,
       teacherId: req.user.userId,
     });
 
@@ -84,10 +85,27 @@ const updateClass = async (req, res, next) => {
   }
 };
 
+const joinClassByCode = async (req, res, next) => {
+  try {
+    const updatedClass = await classService.joinClassByCode({
+      code: req.body.code,
+      studentId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: updatedClass,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createClass,
   addStudent,
   getClasses,
   getClassById,
   updateClass,
+  joinClassByCode,
 };

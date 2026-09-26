@@ -15,8 +15,11 @@ export const SubmissionResultModal = ({ open, onClose, submission }) => {
   if (!submission) return null;
 
   const isPassed = submission.status === "PASSED";
-  const passRate = submission.totalTests
-    ? Math.round(((submission.passedCount || 0) / submission.totalTests) * 100)
+  const isPending = ["PENDING", "RUNNING"].includes(submission.status);
+  const passedCount = submission.testCasesPassed ?? submission.passedCount ?? 0;
+  const totalTests = submission.totalTestCases ?? submission.totalTests ?? 0;
+  const passRate = totalTests
+    ? Math.round((passedCount / totalTests) * 100)
     : isPassed
     ? 100
     : 0;
@@ -34,6 +37,8 @@ export const SubmissionResultModal = ({ open, onClose, submission }) => {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {isPassed ? (
             <CheckCircleFilled style={{ color: "var(--success)", fontSize: 24 }} />
+          ) : isPending ? (
+            <ThunderboltFilled style={{ color: "var(--primary)", fontSize: 24 }} />
           ) : (
             <CloseCircleFilled style={{ color: "var(--error)", fontSize: 24 }} />
           )}
@@ -59,12 +64,12 @@ export const SubmissionResultModal = ({ open, onClose, submission }) => {
           >
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>Test Cases</div>
             <div style={{ fontSize: 20, fontWeight: 700 }}>
-              {submission.passedCount || 0} / {submission.totalTests || 0}
+              {passedCount} / {totalTests}
             </div>
             <Progress
               percent={passRate}
               size="small"
-              status={isPassed ? "success" : "exception"}
+              status={isPassed ? "success" : isPending ? "active" : "exception"}
               showInfo={false}
             />
           </div>
@@ -75,7 +80,7 @@ export const SubmissionResultModal = ({ open, onClose, submission }) => {
           >
             <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>Execution Time</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: "var(--info)" }}>
-              {formatDuration(submission.executionTimeMs || submission.runtime)}
+              {formatDuration(submission.executionTime || submission.executionTimeMs || submission.runtime)}
             </div>
           </div>
 
@@ -228,6 +233,11 @@ export const SubmissionResultModal = ({ open, onClose, submission }) => {
                               <div><strong>Input:</strong> {test.input || "<none>"}</div>
                               <div><strong>Expected:</strong> {test.expectedOutput}</div>
                               <div><strong>Actual:</strong> {test.actualOutput || "<none>"}</div>
+                              {test.error ? (
+                                <div style={{ color: "var(--error)", marginTop: 4, whiteSpace: "pre-wrap" }}>
+                                  {test.error}
+                                </div>
+                              ) : null}
                             </div>
                           )}
                         </div>

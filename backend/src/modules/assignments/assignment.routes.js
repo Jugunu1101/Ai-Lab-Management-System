@@ -11,6 +11,7 @@ const {
 const {
   createAssignmentSchema,
   updateAssignmentSchema,
+  generateAIAssignmentSchema,
 } = require("./assignment.validation");
 
 const router = express.Router();
@@ -21,6 +22,14 @@ router.post(
   authorize("TEACHER"),
   validate(createAssignmentSchema),
   assignmentController.createAssignment
+);
+
+router.post(
+  "/generate-ai",
+  authenticate,
+  authorize("TEACHER"),
+  validate(generateAIAssignmentSchema),
+  assignmentController.generateAIAssignment
 );
 
 router.get(
@@ -34,7 +43,7 @@ router.get(
   "/:assignmentId/results",
   authenticate,
   authorize("TEACHER"),
-  assignmentController.getAssignmentResults,
+  assignmentController.getAssignmentResults
 );
 
 router.get(

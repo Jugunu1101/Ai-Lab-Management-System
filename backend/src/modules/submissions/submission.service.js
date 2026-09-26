@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Submission = require("./submission.model");
 const Assignment = require("../assignments/assignment.model");
 const Class = require("../classes/class.model");
@@ -10,6 +11,27 @@ const {
 const {
   analyzeSubmission,
 } = require("../../services/ai/ai.service");
+const { invalidateStudentDashboardCache } = require("../student/student.service");
+
+const SUPPORTED_LANGUAGES = ["javascript", "python", "cpp", "c", "java"];
+
+const normalizeLanguage = (language) =>
+  String(language || "javascript").toLowerCase().trim();
+
+const assertEnrolled = (classData, userId) => {
+  const isEnrolled = classData.students.some(
+    (studentId) => studentId.toString() === String(userId),
+  );
+  
+  const isTeacher = classData.teacherId.toString() === String(userId);
+
+  if (!isEnrolled && !isTeacher) {
+    const error = new Error("You must be enrolled in or teach this class to submit");
+    error.statusCode = 403;
+    error.code = "FORBIDDEN";
+    throw error;
+  }
+};
 
 const createSubmission = async ({ assignmentId, userId, code, language }) => {
   const assignment = await Assignment.findById(assignmentId);
@@ -30,17 +52,7 @@ const createSubmission = async ({ assignmentId, userId, code, language }) => {
     throw error;
   }
 
-  const isEnrolled = classData.students.some(
-    (studentId) => studentId.toString() === userId,
-  );
-
-  if (!isEnrolled) {
-    const error = new Error("You must be enrolled in this class to submit");
-
-    error.statusCode = 403;
-    error.code = "FORBIDDEN";
-    throw error;
-  }
+  assertEnrolled(classData, userId);
 
   if (assignment.deadline && new Date() > assignment.deadline) {
     const error = new Error("Assignment deadline has passed");
@@ -72,17 +84,27 @@ const createSubmission = async ({ assignmentId, userId, code, language }) => {
     assignmentId,
     userId,
     code,
-    language,
+    language: normalizeLanguage(language),
     attemptNumber,
   });
+
+  await invalidateStudentDashboardCache(userId);
 
   return submission;
 };
 
-const getSubmissions = async ({ userId }) => {
-  const submissions = await Submission.find({
-    userId,
-  })
+const getSubmissions = async ({ userId, assignmentId }) => {
+  const query = { userId };
+
+  if (assignmentId) {
+    if (mongoose.Types.ObjectId.isValid(assignmentId)) {
+      query.assignmentId = new mongoose.Types.ObjectId(assignmentId);
+    } else {
+      return [];
+    }
+  }
+
+  const submissions = await Submission.find(query)
     .populate("assignmentId", "title language difficulty")
     .sort({ createdAt: -1 });
 
@@ -122,10 +144,9 @@ const getSubmissionById = async ({
   ).select("testCases");
 
   if (assignment) {
-    submissionObject.testResults =
-      submissionObject.testResults.map((result) => {
-        const testCase =
-          assignment.testCases[result.testCaseIndex];
+    submissionObject.testResults = (submissionObject.testResults || []).map(
+      (result) => {
+        const testCase = assignment.testCases[result.testCaseIndex];
 
         if (testCase && testCase.isHidden) {
           return {
@@ -136,8 +157,13 @@ const getSubmissionById = async ({
           };
         }
 
-        return result;
-      });
+        return {
+          ...result,
+          input: testCase?.input,
+          isHidden: false,
+        };
+      },
+    );
   }
 
   return submissionObject;
@@ -231,7 +257,75 @@ const getSubmissionDetailsForTeacher = async ({
   return submission;
 };
 
-const executeSubmission = async ({ submissionId }) => {
+const runPublicTests = async ({ assignmentId, userId, code, language }) => {
+  const assignment = await Assignment.findById(assignmentId);
+
+  if (!assignment) {
+    const error = new Error("Assignment not found");
+    error.statusCode = 404;
+    error.code = "ASSIGNMENT_NOT_FOUND";
+    throw error;
+  }
+
+  const classData = await Class.findById(assignment.classId);
+
+  if (!classData) {
+    const error = new Error("Class not found");
+    error.statusCode = 404;
+    error.code = "CLASS_NOT_FOUND";
+    throw error;
+  }
+
+  assertEnrolled(classData, userId);
+
+  const normalizedLanguage = normalizeLanguage(language);
+
+  if (!SUPPORTED_LANGUAGES.includes(normalizedLanguage)) {
+    const error = new Error(
+      `Unsupported language "${language}". Supported: ${SUPPORTED_LANGUAGES.join(", ")}`,
+    );
+    error.statusCode = 400;
+    error.code = "UNSUPPORTED_LANGUAGE";
+    throw error;
+  }
+
+  const publicCases = (assignment.testCases || []).filter((tc) => !tc.isHidden);
+
+  if (publicCases.length === 0) {
+    const error = new Error("This assignment has no public test cases to run");
+    error.statusCode = 400;
+    error.code = "NO_PUBLIC_TESTS";
+    throw error;
+  }
+
+  const executionResult = await executeTestCases({
+    code,
+    language: normalizedLanguage,
+    testCases: publicCases,
+  });
+
+  const testResults = executionResult.testResults || [];
+  const passedCount = testResults.filter((result) => result.passed).length;
+
+  return {
+    status: executionResult.status,
+    passed: publicCases.length > 0 && passedCount === publicCases.length,
+    passedCount,
+    totalCount: publicCases.length,
+    score: executionResult.score,
+    details: testResults.map((result, index) => ({
+      index: index + 1,
+      input: publicCases[index]?.input || "",
+      expectedOutput: result.expectedOutput,
+      actualOutput: result.actualOutput,
+      passed: result.passed,
+      executionTime: result.executionTime,
+      error: result.error || "",
+    })),
+  };
+};
+
+const executeSubmission = async ({ submissionId, skipAI = false }) => {
   const submission = await Submission.findById(submissionId);
 
   if (!submission) {
@@ -250,10 +344,9 @@ const executeSubmission = async ({ submissionId }) => {
     throw error;
   }
 
-  const supportedLanguages = ["javascript", "python", "cpp", "java"];
-  if (!supportedLanguages.includes(submission.language.toLowerCase())) {
+  if (!SUPPORTED_LANGUAGES.includes(normalizeLanguage(submission.language))) {
     const error = new Error(
-      `Unsupported language "${submission.language}". Supported: ${supportedLanguages.join(", ")}`
+      `Unsupported language "${submission.language}". Supported: ${SUPPORTED_LANGUAGES.join(", ")}`
     );
     error.statusCode = 400;
     error.code = "UNSUPPORTED_LANGUAGE";
@@ -276,9 +369,9 @@ const executeSubmission = async ({ submissionId }) => {
     const failedTests = totalTests - passedTests;
     const submissionSuccess = totalTests > 0 && passedTests === totalTests;
 
-    if (executionResult.status === "TIMEOUT") {
+    if (executionResult.status === "TIME_LIMIT_EXCEEDED" || executionResult.status === "TIMEOUT") {
       submission.status = "TIMEOUT";
-    } else if (executionResult.status === "ERROR") {
+    } else if (executionResult.status === "COMPILE_ERROR" || executionResult.status === "RUNTIME_ERROR" || executionResult.status === "INTERNAL_ERROR" || executionResult.status === "ERROR") {
       submission.status = "ERROR";
     } else {
       submission.status = submissionSuccess ? "PASSED" : "FAILED";
@@ -288,6 +381,10 @@ const executeSubmission = async ({ submissionId }) => {
     submission.score = executionResult.score;
     submission.testCasesPassed = passedTests;
     submission.totalTestCases = totalTests;
+    submission.executionTime = testResults.reduce(
+      (sum, result) => sum + (result.executionTime || 0),
+      0
+    );
 
     if (totalTests > 0) {
       submission.output = testResults
@@ -302,41 +399,43 @@ const executeSubmission = async ({ submissionId }) => {
 
     let aiResult = null;
 
-    try {
-      aiResult = await analyzeSubmission({
-        student: {
-          id: submission.userId.toString(),
-        },
+    if (!skipAI) {
+      try {
+        aiResult = await analyzeSubmission({
+          student: {
+            id: submission.userId.toString(),
+          },
 
-        assignment: {
-          id: assignment._id.toString(),
-          language: assignment.language,
-          topics: assignment.topics,
-        },
+          assignment: {
+            id: assignment._id.toString(),
+            language: assignment.language,
+            topics: assignment.topics,
+          },
 
-        submission: {
-          code: submission.code,
-        },
+          submission: {
+            code: submission.code,
+          },
 
-        testResults: {
-          passed: passedTests,
-          failed: failedTests,
-        },
-      });
-    } catch (aiError) {
-      console.error("AI analysis failed:", {
-        code: aiError.code,
-        message: aiError.message,
-      });
-    }
+          testResults: {
+            passed: passedTests,
+            failed: failedTests,
+          },
+        });
+      } catch (aiError) {
+        console.error("AI analysis failed:", {
+          code: aiError.code,
+          message: aiError.message,
+        });
+      }
 
-    if (aiResult) {
-      submission.aiAnalysis = {
-        mastery: aiResult.mastery || [],
-        weakTopics: aiResult.weakTopics || [],
-        mistakes: aiResult.mistakes || [],
-        recommendations: aiResult.recommendations || [],
-      };
+      if (aiResult) {
+        submission.aiAnalysis = {
+          mastery: aiResult.mastery || [],
+          weakTopics: aiResult.weakTopics || [],
+          mistakes: aiResult.mistakes || [],
+          recommendations: aiResult.recommendations || [],
+        };
+      }
     }
 
     await submission.save();
@@ -406,5 +505,6 @@ module.exports = {
   getAssignmentSubmissions,
   getSubmissionDetailsForTeacher,
   executeSubmission,
+  runPublicTests,
   getSubmissionsByStudent,
 };

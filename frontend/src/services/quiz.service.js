@@ -1,8 +1,12 @@
 import api from "./api";
 
 export const quizService = {
-  getTodayQuiz: async () => {
-    return api.get("/quiz/today");
+  getTodayQuiz: async (params = {}) => {
+    return api.get("/quiz/today", { params });
+  },
+
+  getPracticeQuiz: async (params = {}) => {
+    return api.get("/quiz/practice", { params });
   },
 
   getQuizzes: async (params = {}) => {

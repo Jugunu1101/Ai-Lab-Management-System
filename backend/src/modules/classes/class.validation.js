@@ -45,7 +45,23 @@ const createClassSchema = Joi.object({
 const addStudentSchema = Joi.object({
   studentId: Joi.string()
     .trim()
-    .required(),
+    .optional(),
+  email: Joi.string()
+    .email()
+    .optional()
+}).or("studentId", "email");
+
+const joinClassSchema = Joi.object({
+  code: Joi.string()
+    .trim()
+    .uppercase()
+    .min(4)
+    .max(10)
+    .required()
+    .messages({
+      "string.empty": "Class code is required",
+      "any.required": "Please enter a class code",
+    }),
 });
 
 const updateClassSchema = Joi.object({
@@ -71,5 +87,6 @@ const updateClassSchema = Joi.object({
 module.exports = {
   createClassSchema,
   addStudentSchema,
+  joinClassSchema,
   updateClassSchema,
 };

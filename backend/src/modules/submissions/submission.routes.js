@@ -10,6 +10,7 @@ const {
 
 const {
   createSubmissionSchema,
+  runTestsSchema,
 } = require("./submission.validation");
 
 const router = express.Router();
@@ -17,15 +18,23 @@ const router = express.Router();
 router.post(
   "/",
   authenticate,
-  authorize("STUDENT"),
+  authorize("STUDENT", "TEACHER"),
   validate(createSubmissionSchema),
   submissionController.createSubmission
+);
+
+router.post(
+  "/run",
+  authenticate,
+  authorize("STUDENT", "TEACHER"),
+  validate(runTestsSchema),
+  submissionController.runPublicTests
 );
 
 router.get(
   "/",
   authenticate,
-  authorize("STUDENT"),
+  authorize("STUDENT", "TEACHER", "ADMIN"),
   submissionController.getSubmissions
 );
 

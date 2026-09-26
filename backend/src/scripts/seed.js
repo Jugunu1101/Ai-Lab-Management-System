@@ -6,6 +6,8 @@ const bcrypt = require("bcryptjs");
 const User = require("../modules/users/user.model");
 const Class = require("../modules/classes/class.model");
 const Assignment = require("../modules/assignments/assignment.model");
+const College = require("../modules/colleges/college.model");
+const { seedDefaultColleges } = require("../config/seedColleges");
 
 const seedDatabase = async () => {
   const uri = process.env.MONGODB_URI || "mongodb://localhost:27017/programming_lab";
@@ -14,9 +16,15 @@ const seedDatabase = async () => {
   console.log(`Connecting to MongoDB (${uri})...`);
   await mongoose.connect(uri, { dbName });
   console.log("Connected.");
+  
+  await seedDefaultColleges();
+  const mit = await College.findOne({ code: "MIT" });
+  const stanford = await College.findOne({ code: "STANFORD" });
+  const apex = await College.findOne({ code: "APEX" });
 
   try {
-    const passwordHash = await bcrypt.hash("Password@123", 12);
+    const seedPassword = process.env.DEFAULT_SEED_PASSWORD || "Password@123";
+    const passwordHash = await bcrypt.hash(seedPassword, 12);
 
     // 1. Seed Admin
     let admin = await User.findOne({ email: "admin@lab.edu" });
@@ -26,7 +34,7 @@ const seedDatabase = async () => {
         email: "admin@lab.edu",
         passwordHash,
         role: "ADMIN",
-        collegeId: "ADM001",
+        collegeId: mit ? mit._id : null,
         department: "Administration",
       });
       console.log("Created Admin: admin@lab.edu");
@@ -42,7 +50,7 @@ const seedDatabase = async () => {
         email: "teacher@lab.edu",
         passwordHash,
         role: "TEACHER",
-        collegeId: "TCH001",
+        collegeId: mit ? mit._id : null,
         department: "Computer Science",
       });
       console.log("Created Teacher: teacher@lab.edu");
@@ -58,12 +66,28 @@ const seedDatabase = async () => {
         email: "student@lab.edu",
         passwordHash,
         role: "STUDENT",
-        collegeId: "STU001",
+        collegeId: apex ? apex._id : null,
         department: "Computer Science",
       });
       console.log("Created Student: student@lab.edu");
     } else {
       console.log("Student already exists: student@lab.edu");
+    }
+
+    // Seed Haiku user
+    let haiku = await User.findOne({ email: "haiku@mit.edu" });
+    if (!haiku) {
+      haiku = await User.create({
+        name: "Haiku AI",
+        email: "haiku@mit.edu",
+        passwordHash,
+        role: "STUDENT",
+        collegeId: mit ? mit._id : null,
+        department: "AI & Robotics",
+      });
+      console.log("Created Student: haiku@mit.edu");
+    } else {
+      console.log("Student already exists: haiku@mit.edu");
     }
 
     // 4. Seed Class
@@ -72,7 +96,7 @@ const seedDatabase = async () => {
       sampleClass = await Class.create({
         name: "CS101: Data Structures & Algorithms",
         teacherId: teacher._id,
-        students: [student._id],
+        students: [student._id, haiku._id],
         languages: ["javascript", "python", "cpp", "java"],
         semester: "Fall 2026",
       });
@@ -80,8 +104,11 @@ const seedDatabase = async () => {
     } else {
       if (!sampleClass.students.includes(student._id)) {
         sampleClass.students.push(student._id);
-        await sampleClass.save();
       }
+      if (!sampleClass.students.includes(haiku._id)) {
+        sampleClass.students.push(haiku._id);
+      }
+      await sampleClass.save();
       console.log("Class already exists: CS101");
     }
 
@@ -116,6 +143,7 @@ const seedDatabase = async () => {
     console.log("- Admin:   admin@lab.edu");
     console.log("- Teacher: teacher@lab.edu");
     console.log("- Student: student@lab.edu");
+    console.log("- Student: haiku@mit.edu");
     console.log("========================================================\n");
   } catch (error) {
     console.error("Seeding failed:", error);

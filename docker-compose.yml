@@ -42,7 +42,7 @@ services:
     container_name: programming-lab-ai-service
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8001:8000"
     environment:
       - APP_ENV=production
       - AI_MOCK_MODE=${AI_MOCK_MODE:-true}
@@ -67,14 +67,14 @@ services:
     container_name: programming-lab-backend
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - PORT=3000
       - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/programming_lab}
       - MONGODB_DB_NAME=ai-lab
       - REDIS_URL=redis://redis:6379
       - AI_SERVICE_URL=http://ai-service:8000
-      - JWT_SECRET=${JWT_SECRET:-0087da057c761317f0eb87d3473d6aef3d4fbefbc0acc7b29f6cacaec29ab016}
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=1d
       - CORS_ORIGIN=*
     volumes:
@@ -102,8 +102,8 @@ services:
     container_name: programming-lab-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "5173:80"
+      - "8080:80"
+      - "5174:80"
     depends_on:
       backend:
         condition: service_healthy

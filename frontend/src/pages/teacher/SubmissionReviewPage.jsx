@@ -48,7 +48,7 @@ export const SubmissionReviewPage = () => {
       try {
         const [assignRes, subRes] = await Promise.allSettled([
           assignmentService.getAssignmentById(id),
-          submissionService.getAssignmentSubmissions(id),
+          assignmentService.getAssignmentResults(id),
         ]);
 
         if (assignRes.status === "fulfilled") {
@@ -58,7 +58,7 @@ export const SubmissionReviewPage = () => {
 
         let list = [];
         if (subRes.status === "fulfilled") {
-          list = subRes.value.data?.submissions || subRes.value.submissions || subRes.value.data || [];
+          list = subRes.value.data?.results || subRes.value.results || subRes.value.data || [];
         }
 
         if (Array.isArray(list) && list.length > 0) {
@@ -85,66 +85,80 @@ export const SubmissionReviewPage = () => {
       title: "Student",
       dataIndex: "studentName",
       key: "studentName",
-      render: (name, rec) => (
+      render: (_, rec) => (
         <div>
-          <div style={{ fontWeight: 600 }}>{name || rec.studentId?.name || "Student"}</div>
-          <Text style={{ fontSize: 12, color: "var(--text-muted)" }}>{rec.studentEmail || rec.studentId?.email}</Text>
+          <div style={{ fontWeight: 600 }}>{rec.student?.name || "Student"}</div>
+          <Text style={{ fontSize: 12, color: "var(--text-muted)" }}>{rec.student?.email}</Text>
         </div>
       ),
     },
     {
       title: "Status",
-      dataIndex: "status",
-      key: "status",
-      render: (status, rec) => {
-        const isPassed = status === "PASSED";
+      dataIndex: "latestStatus",
+      key: "latestStatus",
+      render: (status) => {
+        if (status === "NOT_SUBMITTED") {
+          return <Tag style={{ fontWeight: 700, borderRadius: 6, color: "var(--text-muted)", background: "var(--bg-tertiary)" }}>Pending</Tag>;
+        }
+        const isPassed = status === "PASSED" || status === "COMPLETED";
         return (
           <Tag color={isPassed ? "success" : "error"} style={{ fontWeight: 700, borderRadius: 6 }}>
-            {status} ({rec.passedCount || 0}/{rec.totalTests || 0})
+            {status}
           </Tag>
         );
       },
     },
     {
-      title: "Language",
-      dataIndex: "language",
-      key: "language",
-      render: (l) => <Tag color="cyan" style={{ textTransform: "uppercase" }}>{l}</Tag>,
+      title: "Attempts",
+      dataIndex: "attempts",
+      key: "attempts",
+      render: (attempts) => attempts || 0,
     },
     {
-      title: "Execution Time",
-      dataIndex: "executionTimeMs",
-      key: "executionTimeMs",
-      render: (t) => formatDuration(t),
+      title: "Best Score",
+      dataIndex: "bestScore",
+      key: "bestScore",
+      render: (score) => (
+        <Tag color={score >= 70 ? "success" : score >= 40 ? "warning" : "default"}>
+          {score || 0}%
+        </Tag>
+      ),
     },
     {
-      title: "Memory",
-      dataIndex: "memoryUsedBytes",
-      key: "memoryUsedBytes",
-      render: (m) => formatBytes(m),
-    },
-    {
-      title: "Submitted",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (d) => formatDate(d, true),
+      title: "Submitted At",
+      dataIndex: "latestSubmissionAt",
+      key: "latestSubmissionAt",
+      render: (d) => d ? formatDate(d, true) : "—",
     },
     {
       title: "Action",
       key: "action",
-      render: (_, record) => (
-        <Button
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => {
-            setSelectedSubmission(record);
-            setModalOpen(true);
-          }}
-          style={{ borderRadius: 6 }}
-        >
-          Inspect Code & AI Diagnostics
-        </Button>
-      ),
+      render: (_, record) => {
+        if (record.attempts === 0) return null;
+        return (
+          <Space>
+            <Button
+              size="small"
+              icon={<CodeOutlined />}
+              onClick={() => {
+                setSelectedSubmission(record.latestSubmission);
+                setModalOpen(true);
+              }}
+              style={{ borderRadius: 6, color: "var(--primary)", borderColor: "var(--primary)" }}
+            >
+              Code
+            </Button>
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => navigate(`/teacher/students/${record.student?._id}`)}
+              style={{ borderRadius: 6 }}
+            >
+              Progress
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -176,7 +190,7 @@ export const SubmissionReviewPage = () => {
         <Table
           dataSource={submissions}
           columns={columns}
-          rowKey="_id"
+          rowKey={(record) => record.student?._id || Math.random().toString()}
           pagination={{ pageSize: 10 }}
         />
       </Card>

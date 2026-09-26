@@ -1,0 +1,9 @@
+{
+  "name": "codelab-load-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Load testing suite for CodeLab AI",
+  "dependencies": {
+    "autocannon": "^7.15.0"
+  }
+}

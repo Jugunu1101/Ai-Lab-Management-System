@@ -1,9 +1,10 @@
-const { executeCode } = require("./code-executor.service");
+const { executeAllTestCases } = require("./code-executor.service");
 
 const normalizeOutput = (output) => {
   return (output || "")
     .trim()
-    .replace(/\r\n/g, "\n");
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+$/gm, ""); // strip trailing spaces on each line
 };
 
 const executeTestCases = async ({
@@ -12,37 +13,60 @@ const executeTestCases = async ({
   testCases = [],
   timeoutMs = 5000,
 }) => {
+  // Execute all test cases inside the executor
+  const result = await executeAllTestCases({
+    code,
+    language,
+    testCases,
+    timeoutMs,
+  });
+
+  // If there was an internal/compile error, return immediately
+  if (result.status === "COMPILE_ERROR" || result.status === "INTERNAL_ERROR") {
+    return {
+      status: result.status,
+      testResults: testCases.map((tc, index) => ({
+        testCaseIndex: index,
+        passed: false,
+        actualOutput: "",
+        expectedOutput: tc.expectedOutput || "",
+        executionTime: 0,
+        error: result.error,
+        status: result.status,
+      })),
+      score: 0,
+    };
+  }
+
+  // Otherwise, evaluate each test case
   const results = [];
-  let overallStatus = "COMPLETED";
+  let overallStatus = "PASSED";
 
   for (let i = 0; i < testCases.length; i++) {
+    const execRes = result.testResults[i];
     const testCase = testCases[i];
-    const startTime = Date.now();
-
-    const result = await executeCode({
-      code,
-      language,
-      input: testCase.input || "",
-      timeoutMs,
-    });
-
-    const executionTime = Date.now() - startTime;
-    const actualOutput = normalizeOutput(result.stdout);
+    
+    const actualOutput = normalizeOutput(execRes.stdout);
     const expectedOutput = normalizeOutput(testCase.expectedOutput || "");
+    
+    let passed = false;
+    let tcStatus = execRes.status;
+    let error = execRes.stderr;
 
-    const passed =
-      result.status === "COMPLETED" && actualOutput === expectedOutput;
+    if (tcStatus === "PASSED") {
+      if (actualOutput === expectedOutput) {
+        passed = true;
+      } else {
+        tcStatus = "FAILED"; // Wrong Answer
+      }
+    }
 
-    let error = result.stderr || "";
-
-    if (result.status === "TIMEOUT") {
-      error = "Execution timed out";
-      overallStatus = "TIMEOUT";
-    } else if (result.status === "ERROR") {
-      overallStatus = "ERROR";
-    } else if (result.status === "FAILED" || !passed) {
-      if (overallStatus !== "TIMEOUT" && overallStatus !== "ERROR") {
-        overallStatus = "FAILED";
+    if (!passed && tcStatus !== "PASSED") {
+      if (overallStatus === "PASSED") {
+        overallStatus = tcStatus;
+      } else if (overallStatus !== "TIME_LIMIT_EXCEEDED" && overallStatus !== "RUNTIME_ERROR") {
+        // Prioritize TIME_LIMIT_EXCEEDED and RUNTIME_ERROR over FAILED
+        overallStatus = tcStatus;
       }
     }
 
@@ -51,16 +75,14 @@ const executeTestCases = async ({
       passed,
       actualOutput,
       expectedOutput,
-      executionTime,
+      executionTime: execRes.executionTime,
       error,
+      status: tcStatus,
     });
   }
 
-  const passedTests = results.filter((result) => result.passed).length;
-  const score =
-    testCases.length === 0
-      ? 0
-      : Math.round((passedTests / testCases.length) * 100);
+  const passedTests = results.filter((r) => r.passed).length;
+  const score = testCases.length === 0 ? 0 : Math.round((passedTests / testCases.length) * 100);
 
   return {
     status: overallStatus,

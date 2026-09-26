@@ -1,9 +1,12 @@
 const errorHandler = (err, req, res, next) => {
-  console.error(err);
+  if (process.env.NODE_ENV !== "test") {
+    console.error(`[Error] RequestID: ${req?.id || "N/A"} - ${err.message}`, err);
+  }
 
   let statusCode = err.statusCode || 500;
   let code = err.code || "INTERNAL_SERVER_ERROR";
   let message = err.message || "Something went wrong";
+  let details = err.details || undefined;
 
   // Invalid MongoDB ObjectId
   if (err.name === "CastError") {
@@ -28,13 +31,17 @@ const errorHandler = (err, req, res, next) => {
     message = "A resource with this value already exists";
   }
 
-  return res.status(statusCode).json({
+  const responsePayload = {
     success: false,
     error: {
       code,
       message,
+      ...(req?.id && { requestId: req.id }),
+      ...(details && { details }),
     },
-  });
+  };
+
+  return res.status(statusCode).json(responsePayload);
 };
 
 module.exports = errorHandler;

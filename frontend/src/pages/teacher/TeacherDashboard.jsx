@@ -236,6 +236,28 @@ export const TeacherDashboard = () => {
         </Col>
       </Row>
 
+      {/* AI Interventions Section (Phase 7 Request) */}
+      <Card
+        className="glass-card"
+        bordered={false}
+        title={
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: 18, fontWeight: 700, color: "#a855f7" }}>
+              <ThunderboltOutlined style={{ marginRight: 6 }} /> AI Learning Interventions
+            </span>
+          </div>
+        }
+        style={{ marginBottom: 24 }}
+      >
+        <div style={{ textAlign: "center", padding: "40px 20px" }}>
+          <WarningOutlined style={{ fontSize: 32, color: "#f59e0b", marginBottom: 16 }} />
+          <h3 style={{ color: "#fff", fontSize: 18, marginBottom: 8 }}>Intervention History Unavailable</h3>
+          <p style={{ color: "#94a3b8", maxWidth: 500, margin: "0 auto", lineHeight: 1.6 }}>
+            The backend API currently does not expose an endpoint to retrieve the historical AI interventions and their resulting score changes for each student. This section cannot be populated with real data until the <code>/api/ai/interventions</code> endpoint is implemented in the backend architecture.
+          </p>
+        </div>
+      </Card>
+
       {/* Modals */}
       <CreateAssignmentModal
         open={createAssignOpen}

@@ -16,6 +16,7 @@ class QuizRequest(BaseModel):
     language: str
     difficulty: str = "medium"
     questionCount: int = Field(default=5, ge=1, le=10)
+    excludedQuestions: Optional[List[str]] = Field(default_factory=list)
 
 
 # ---------- Response ----------

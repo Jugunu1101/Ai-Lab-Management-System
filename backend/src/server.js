@@ -1,9 +1,12 @@
 require("dotenv").config();
+// AI Service URL fallback
 const app = require("./app");
 const connectDB = require("./config/db");
 const { startSubmissionWorker } = require("./queues/workers/submission.worker");
 const { startAIWorker } = require("./queues/workers/ai.worker");
 const { startReportWorker } = require("./queues/workers/report.worker");
+const { startAgentWorker } = require("./queues/workers/agent.worker");
+const { startAssignmentWorker } = require("./queues/workers/assignment.worker");
 
 console.log("JWT secret loaded:", !!process.env.JWT_SECRET);
 
@@ -31,6 +34,8 @@ const startWorkers = async () => {
     startSubmissionWorker();
     startAIWorker();
     startReportWorker();
+    startAgentWorker();
+    startAssignmentWorker();
     console.log("BullMQ background workers initialized.");
   } catch (err) {
     console.warn("Failed to initialize BullMQ workers:", err.message);

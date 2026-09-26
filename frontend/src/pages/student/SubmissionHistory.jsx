@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Table, Tag, Button, Card, Typography, Select, Row, Col, Space } from "antd";
-import { HistoryOutlined, EyeOutlined, CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { Table, Button, Typography, Select, Row, Col, Space } from "antd";
+import {
+  EyeOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  FilterOutlined,
+} from "@ant-design/icons";
 import SubmissionResultModal from "../../components/student/SubmissionResultModal";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorState from "../../components/shared/ErrorState";
 import EmptyState from "../../components/shared/EmptyState";
 import submissionService from "../../services/submission.service";
-import { SUBMISSION_STATUS_CONFIG } from "../../utils/constants";
 import { formatDate, formatDuration, formatBytes } from "../../utils/formatters";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 
 export const SubmissionHistory = () => {
@@ -54,10 +58,12 @@ export const SubmissionHistory = () => {
       key: "assignmentTitle",
       render: (text, rec) => (
         <div>
-          <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "#18231D", marginBottom: 2 }}>
             {text || rec.assignmentId?.title || "Problem Submission"}
           </div>
-          <Text style={{ fontSize: 12, color: "var(--text-muted)" }}>ID: {rec._id}</Text>
+          <span style={{ fontSize: 12, color: "#748078", fontFamily: "var(--font-mono)" }}>
+            ID: {rec._id}
+          </span>
         </div>
       ),
     },
@@ -66,9 +72,20 @@ export const SubmissionHistory = () => {
       dataIndex: "language",
       key: "language",
       render: (lang) => (
-        <Tag color="cyan" style={{ textTransform: "uppercase", fontWeight: 600, borderRadius: 6 }}>
-          {lang}
-        </Tag>
+        <span
+          style={{
+            background: "#EDF6EA",
+            color: "#174832",
+            border: "1px solid #DCEEDD",
+            borderRadius: 6,
+            padding: "3px 10px",
+            fontSize: 12,
+            fontWeight: 700,
+            textTransform: "uppercase",
+          }}
+        >
+          {lang || "CPP"}
+        </span>
       ),
     },
     {
@@ -78,13 +95,23 @@ export const SubmissionHistory = () => {
       render: (status, record) => {
         const isPassed = status === "PASSED";
         return (
-          <Tag
-            color={isPassed ? "success" : "error"}
-            icon={isPassed ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
-            style={{ fontWeight: 700, borderRadius: 6, padding: "2px 8px" }}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: isPassed ? "#EDF6EA" : "#FDF1F1",
+              color: isPassed ? "#2F7D4A" : "#C83C3C",
+              border: isPassed ? "1px solid #DCEEDD" : "1px solid #F8D7D7",
+              borderRadius: 8,
+              padding: "4px 12px",
+              fontSize: 13,
+              fontWeight: 700,
+            }}
           >
-            {status} ({record.passedCount || 0}/{record.totalTests || 0})
-          </Tag>
+            {isPassed ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+            {status} ({record.testCasesPassed || 0}/{record.totalTestCases || 0})
+          </span>
         );
       },
     },
@@ -92,32 +119,44 @@ export const SubmissionHistory = () => {
       title: "Runtime",
       dataIndex: "executionTimeMs",
       key: "executionTimeMs",
-      render: (time) => formatDuration(time),
+      render: (time) => (
+        <span style={{ fontSize: 14, color: "#59665E" }}>
+          {time ? formatDuration(time) : "-"}
+        </span>
+      ),
     },
     {
       title: "Memory",
       dataIndex: "memoryUsedBytes",
       key: "memoryUsedBytes",
-      render: (mem) => formatBytes(mem),
+      render: (mem) => (
+        <span style={{ fontSize: 14, color: "#59665E" }}>
+          {mem ? formatBytes(mem) : "-"}
+        </span>
+      ),
     },
     {
       title: "Submitted At",
       dataIndex: "createdAt",
       key: "createdAt",
-      render: (date) => formatDate(date, true),
+      render: (date) => (
+        <span style={{ fontSize: 14, color: "#18231D" }}>
+          {formatDate(date, true)}
+        </span>
+      ),
     },
     {
       title: "Action",
       key: "action",
       render: (_, record) => (
         <Button
-          size="small"
+          className="cl-btn-secondary"
+          style={{ height: 38, padding: "0 16px", fontSize: 13 }}
           icon={<EyeOutlined />}
           onClick={() => {
             setSelectedSubmission(record);
             setModalOpen(true);
           }}
-          style={{ borderRadius: 6 }}
         >
           View AI Details
         </Button>
@@ -126,19 +165,30 @@ export const SubmissionHistory = () => {
   ];
 
   return (
-    <div>
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, margin: 0 }}>Submission History</h1>
-          <Text style={{ color: "var(--text-muted)", fontSize: 14 }}>
+    <div className="cl-container" style={{ paddingBottom: 64 }}>
+      {/* Page Header */}
+      <div
+        style={{
+          marginBottom: 32,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          flexWrap: "wrap",
+          gap: 16,
+        }}
+      >
+        <div className="cl-page-header" style={{ marginBottom: 0 }}>
+          <h1>Submission History</h1>
+          <p className="cl-page-subtitle">
             Review past sandbox executions, test logs, and automated AI code diagnostics.
-          </Text>
+          </p>
         </div>
 
         <Select
           value={statusFilter}
           onChange={setStatusFilter}
-          style={{ width: 160 }}
+          style={{ width: 180, height: 46 }}
+          suffixIcon={<FilterOutlined style={{ color: "#748078" }} />}
         >
           <Option value="ALL">All Statuses</Option>
           <Option value="PASSED">Passed Only</Option>
@@ -146,24 +196,48 @@ export const SubmissionHistory = () => {
         </Select>
       </div>
 
-      <Card className="glass-card" bordered={false} bodyStyle={{ padding: 0 }}>
+      {/* Main Table Card */}
+      <div
+        className="cl-card"
+        style={{
+          background: "#FFFFFF",
+          borderRadius: 20,
+          padding: 0,
+          border: "1px solid #DDE5DC",
+          overflow: "hidden",
+          boxShadow: "0 2px 8px rgba(18, 60, 42, 0.04)",
+        }}
+      >
         {loading ? (
-          <LoadingSpinner tip="Loading submissions..." />
+          <div style={{ padding: 48 }}>
+            <LoadingSpinner tip="Loading submissions..." />
+          </div>
         ) : error ? (
-          <div style={{ padding: 24 }}>
+          <div style={{ padding: 32 }}>
             <ErrorState message={error} onRetry={fetchSubmissions} />
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState description="No submissions match your filter" />
+          <div style={{ padding: 32 }}>
+            <EmptyState
+              title="No submissions match your filter"
+              description="Solve coding assignments to generate submission records and execution metrics."
+              actionText="Explore Assignments"
+              onAction={() => window.location.href = "/student/assignments"}
+            />
+          </div>
         ) : (
           <Table
             dataSource={filtered}
             columns={columns}
             rowKey="_id"
-            pagination={{ pageSize: 10 }}
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: false,
+              style: { padding: "16px 24px", margin: 0 },
+            }}
           />
         )}
-      </Card>
+      </div>
 
       <SubmissionResultModal
         open={modalOpen}

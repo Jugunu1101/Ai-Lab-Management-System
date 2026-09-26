@@ -122,4 +122,6 @@ progressSchema.index(
   }
 );
 
+progressSchema.index({ studentId: 1, masteryScore: 1 });
+
 module.exports = mongoose.model("Progress", progressSchema);

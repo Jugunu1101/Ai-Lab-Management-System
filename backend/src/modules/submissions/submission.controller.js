@@ -1,5 +1,7 @@
 const submissionService = require("./submission.service");
 const { enqueueCodeExecution } = require("../../queues/submission.queue");
+const { enqueueAIAnalysis } = require("../../queues/ai.queue");
+const { checkRedisAvailability } = require("../../config/redis");
 
 const createSubmission = async (req, res, next) => {
   try {
@@ -10,28 +12,57 @@ const createSubmission = async (req, res, next) => {
       userId: req.user.userId,
     });
 
-    // Enqueue code execution job onto BullMQ
-    try {
-      await enqueueCodeExecution({ submissionId: submission._id });
-      return res.status(201).json({
-        success: true,
-        message: "Submission received and enqueued for execution",
-        data: submission,
-      });
-    } catch (queueError) {
-      console.warn(
-        "Queue enqueue failed, falling back to synchronous execution:",
-        queueError.message
-      );
-      const result = await submissionService.executeSubmission({
-        submissionId: submission._id,
-      });
+    const isRedisUp = await checkRedisAvailability();
 
-      return res.status(201).json({
-        success: true,
-        data: result,
+    if (isRedisUp) {
+      try {
+        await enqueueCodeExecution({ submissionId: submission._id });
+        return res.status(201).json({
+          success: true,
+          message: "Submission received and enqueued for execution",
+          data: submission,
+        });
+      } catch (queueError) {
+        console.warn(
+          "Queue enqueue failed, falling back to synchronous execution:",
+          queueError.message
+        );
+      }
+    }
+
+    const result = await submissionService.executeSubmission({
+      submissionId: submission._id,
+      skipAI: true,
+    });
+
+    if (isRedisUp) {
+      enqueueAIAnalysis({ submissionId: submission._id }).catch((err) => {
+        console.warn("Failed to enqueue AI analysis:", err.message);
       });
     }
+
+    return res.status(201).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const runPublicTests = async (req, res, next) => {
+  try {
+    const result = await submissionService.runPublicTests({
+      assignmentId: req.body.assignmentId,
+      code: req.body.code,
+      language: req.body.language,
+      userId: req.user.userId,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
   } catch (error) {
     next(error);
   }
@@ -41,6 +72,7 @@ const getSubmissions = async (req, res, next) => {
   try {
     const submissions = await submissionService.getSubmissions({
       userId: req.user.userId,
+      assignmentId: req.query.assignmentId,
     });
 
     return res.status(200).json({
@@ -124,6 +156,7 @@ const getSubmissionsByStudent = async (req, res, next) => {
 
 module.exports = {
   createSubmission,
+  runPublicTests,
   getSubmissions,
   getSubmissionById,
   getAssignmentSubmissions,

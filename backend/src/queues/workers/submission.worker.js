@@ -44,9 +44,9 @@ const processSubmission = async (job) => {
     // Determine status
     const allPassed = totalTests > 0 && passedTests === totalTests;
 
-    if (executionResult.status === "TIMEOUT") {
+    if (executionResult.status === "TIME_LIMIT_EXCEEDED" || executionResult.status === "TIMEOUT") {
       submission.status = "TIMEOUT";
-    } else if (executionResult.status === "ERROR") {
+    } else if (executionResult.status === "ERROR" || executionResult.status === "COMPILE_ERROR" || executionResult.status === "INTERNAL_ERROR" || executionResult.status === "RUNTIME_ERROR") {
       submission.status = "ERROR";
     } else {
       submission.status = allPassed ? "PASSED" : "FAILED";
@@ -56,6 +56,10 @@ const processSubmission = async (job) => {
     submission.score = executionResult.score;
     submission.testCasesPassed = passedTests;
     submission.totalTestCases = totalTests;
+    submission.executionTime = testResults.reduce(
+      (sum, result) => sum + (result.executionTime || 0),
+      0
+    );
 
     if (totalTests > 0) {
       submission.output = testResults

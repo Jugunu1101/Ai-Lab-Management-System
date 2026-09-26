@@ -19,10 +19,15 @@ class LearningPathRequest(BaseModel):
 class LearningStep(BaseModel):
     step: int = Field(ge=1)
     topic: str
+    priority: str
+    estimatedTime: str
     objective: str
-    activities: List[str]
+    suggestedActivity: str
+    status: str
 
 
 class LearningPathResponse(AIMetadata):
-    learningPath: List[LearningStep]
+    title: str
     summary: str
+    targetFocus: List[str]
+    steps: List[LearningStep]

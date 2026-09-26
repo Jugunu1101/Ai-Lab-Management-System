@@ -1,5 +1,16 @@
 venv/
+.venv/
 __pycache__/
-*.pyc
-.env
+*.py[cod]
 .pytest_cache/
+
+# Environment variables
+.env
+.env.*
+*.env
+!.env.example
+!*.env.example
+
+# Logs
+*.log
+logs/

@@ -6,6 +6,7 @@ const validate = require("../../middleware/validate.middleware");
 const {
   createClassSchema,
   addStudentSchema,
+  joinClassSchema,
   updateClassSchema,
 } = require("./class.validation");
 const {
@@ -29,6 +30,14 @@ router.post(
   authorize("TEACHER"),
   validate(addStudentSchema),
   classController.addStudent
+);
+
+router.post(
+  "/join",
+  authenticate,
+  authorize("STUDENT"),
+  validate(joinClassSchema),
+  classController.joinClassByCode
 );
 
 router.get(

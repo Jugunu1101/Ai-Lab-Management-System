@@ -11,6 +11,9 @@ const classSchema = new mongoose.Schema(
     code: {
       type: String,
       trim: true,
+      uppercase: true,
+      sparse: true,
+      index: true,
     },
 
     department: {

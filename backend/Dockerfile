@@ -7,7 +7,7 @@ RUN apk add --no-cache docker-cli wget
 
 # Install production dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev --legacy-peer-deps
 
 # Copy application source
 COPY src ./src

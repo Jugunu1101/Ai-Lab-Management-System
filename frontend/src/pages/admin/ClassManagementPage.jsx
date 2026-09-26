@@ -18,7 +18,7 @@ export const ClassManagementPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await classService.getClasses();
+      const res = await adminService.getClasses();
       const list = res.data?.classes || res.classes || res.data || [];
       if (Array.isArray(list) && list.length > 0) {
         setClasses(list);

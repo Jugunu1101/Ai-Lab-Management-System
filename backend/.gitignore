@@ -1,0 +1,34 @@
+# Backend .gitignore
+node_modules/
+dist/
+build/
+coverage/
+
+# Environment variables
+.env
+.env.*
+*.env
+!.env.example
+!*.env.example
+
+# Test logs & dumps
+jest_out*.txt
+*_out.txt
+*_out*.txt
+*.log
+
+# Ad-hoc test scripts with credentials
+approve-all-teachers.js
+fix-assignment.js
+run-e2e.js
+test-ai-agent-student-flow.js
+test-api-fixed.js
+test-e2e-demo.js
+test-e2e-teacher.js
+test-full-qa.js
+test-teacher-approval.js
+
+# Uploads & Temp
+uploads/
+tmp/
+temp/

@@ -38,24 +38,26 @@ RULES:
 2. Create a logical learning order.
 3. Give practical activities for each topic.
 4. Keep objectives clear and simple.
-5. Use only topics provided in the student data.
+5. If student data is provided, use those topics. If student data is empty, generate a foundational beginner learning path (e.g., variables, basic I/O, loops).
 6. Return ONLY valid JSON.
 7. Do not use markdown.
 
 Return this structure:
 
 {{
-  "learningPath": [
+  "title": "Engaging Title for the Learning Path",
+  "summary": "Short personalized learning summary",
+  "targetFocus": ["Topic 1", "Topic 2", "Topic 3"],
+  "steps": [
     {{
       "step": 1,
       "topic": "topic name",
+      "priority": "HIGH or MEDIUM or LOW",
+      "estimatedTime": "30m",
       "objective": "What the student should learn",
-      "activities": [
-        "Activity 1",
-        "Activity 2"
-      ]
+      "suggestedActivity": "A single actionable activity description",
+      "status": "IN_PROGRESS"
     }}
-  ],
-  "summary": "Short personalized learning summary"
+  ]
 }}
 """

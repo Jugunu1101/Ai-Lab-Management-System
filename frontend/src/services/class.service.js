@@ -20,6 +20,10 @@ export const classService = {
   addStudentToClass: async (classId, studentData) => {
     return api.post(`/classes/${classId}/students`, studentData);
   },
+
+  joinClassByCode: async (code) => {
+    return api.post("/classes/join", { code });
+  },
 };
 
 export default classService;

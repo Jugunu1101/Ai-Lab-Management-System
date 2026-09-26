@@ -52,4 +52,6 @@ const aiAnalysisSchema = new mongoose.Schema(
   }
 );
 
+aiAnalysisSchema.index({ studentId: 1, type: 1, createdAt: -1 });
+
 module.exports = mongoose.model("AIAnalysis", aiAnalysisSchema, "ai_analyses");

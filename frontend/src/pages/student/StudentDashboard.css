@@ -1,0 +1,1332 @@
+/* ==========================================================================
+   CODELAB AI — COMPLETE STUDENT DASHBOARD STYLESHEET
+   Palette: Dark Green (#123C2A), Forest Green (#246B45), Cream (#F8F6EE), 
+            Warm White (#FFFFFF), Yellow (#F4C542), Soft Green (#DCEEDD)
+   ========================================================================== */
+
+:root {
+  --cl-green-primary: #123C2A;
+  --cl-green-secondary: #1B5138;
+  --cl-green-forest: #246B45;
+  --cl-green-soft: #DCEEDD;
+  --cl-green-light: #EDF6EA;
+  --cl-cream: #F8F6EE;
+  --cl-cream-darker: #F1EFE3;
+  --cl-white: #FFFFFF;
+  --cl-yellow: #F4C542;
+  --cl-yellow-soft: #FFF3C4;
+  --cl-yellow-pale: #FFFBEA;
+  --cl-text: #18231D;
+  --cl-text-secondary: #5F6B63;
+  --cl-text-muted: #87948B;
+  --cl-border: #DDE5DC;
+  --cl-border-light: #EBF0EA;
+  --cl-error: #D94848;
+  --cl-error-bg: #FDF1F1;
+  --cl-error-border: #F8D3D3;
+  --cl-shadow-sm: 0 2px 8px rgba(18, 60, 42, 0.04);
+  --cl-shadow-md: 0 8px 24px rgba(18, 60, 42, 0.06);
+  --cl-shadow-lg: 0 16px 36px rgba(18, 60, 42, 0.08);
+  --cl-radius-sm: 10px;
+  --cl-radius-md: 14px;
+  --cl-radius-lg: 20px;
+  --cl-radius-xl: 24px;
+}
+
+/* Page Container — Long, Scrollable, Spacious */
+.cl-dashboard-container {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 8px 24px 80px 24px;
+  background-color: var(--cl-cream);
+  min-height: 100vh;
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+  color: var(--cl-text);
+}
+
+/* Vertical Spacing System */
+.cl-dashboard-gap {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Top Header Bar */
+.cl-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 8px 0 16px 0;
+  flex-wrap: wrap;
+}
+
+.cl-header-greeting h1 {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--cl-text);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cl-header-subtitle {
+  font-size: 15px;
+  color: var(--cl-text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+.cl-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cl-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cl-search-input {
+  width: 260px;
+  height: 44px;
+  padding: 0 16px 0 42px;
+  border-radius: 9999px;
+  border: 1px solid var(--cl-border);
+  background: var(--cl-white);
+  color: var(--cl-text);
+  font-size: 14px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.cl-search-input:focus {
+  border-color: var(--cl-green-forest);
+  box-shadow: 0 0 0 3px rgba(36, 107, 69, 0.12);
+  width: 290px;
+}
+
+.cl-search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--cl-text-muted);
+  pointer-events: none;
+}
+
+.cl-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--cl-border);
+  background: var(--cl-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  color: var(--cl-text);
+}
+
+.cl-icon-btn:hover {
+  background: var(--cl-green-light);
+  border-color: var(--cl-green-forest);
+}
+
+.cl-notification-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  background: var(--cl-yellow);
+  border-radius: 50%;
+  border: 2px solid var(--cl-white);
+}
+
+.cl-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--cl-white);
+  border: 1px solid var(--cl-border);
+  border-radius: 9999px;
+  padding: 4px 16px 4px 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cl-user-badge:hover {
+  border-color: var(--cl-green-forest);
+  box-shadow: var(--cl-shadow-sm);
+}
+
+.cl-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--cl-green-primary);
+  color: var(--cl-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.cl-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.cl-user-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cl-text);
+  line-height: 1.2;
+}
+
+.cl-user-role {
+  font-size: 12px;
+  color: var(--cl-text-secondary);
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   CARD SYSTEM
+   ========================================================================== */
+.cl-card {
+  background: var(--cl-white);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-xl);
+  padding: 28px 32px;
+  box-shadow: var(--cl-shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.cl-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.cl-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cl-card-icon-box {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--cl-radius-md);
+  background: var(--cl-green-light);
+  color: var(--cl-green-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-card-title {
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--cl-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.cl-card-subtitle {
+  font-size: 14px;
+  color: var(--cl-text-secondary);
+  margin: 2px 0 0 0;
+}
+
+.cl-view-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: var(--cl-green-forest);
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--cl-radius-sm);
+  transition: all 0.2s ease;
+}
+
+.cl-view-all-btn:hover {
+  background: var(--cl-green-light);
+  color: var(--cl-green-primary);
+}
+
+/* ==========================================================================
+   PHASE 7 & 8: HERO ROW (Learning Progress + Current Focus)
+   ========================================================================== */
+.cl-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 28px;
+}
+
+/* Left Hero: Learning Progress */
+.cl-progress-hero-card {
+  background: var(--cl-white);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-xl);
+  padding: 32px 36px;
+  box-shadow: var(--cl-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cl-progress-hero-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.cl-gauge-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 170px;
+}
+
+.cl-gauge-svg {
+  transform: rotate(-90deg);
+}
+
+.cl-gauge-bg {
+  stroke: var(--cl-green-light);
+}
+
+.cl-gauge-fill {
+  stroke: var(--cl-green-forest);
+  transition: stroke-dashoffset 1s ease-out;
+  stroke-linecap: round;
+}
+
+.cl-gauge-inner-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-gauge-percent {
+  font-family: var(--font-heading);
+  font-size: 46px;
+  font-weight: 800;
+  color: var(--cl-text);
+  line-height: 1;
+}
+
+.cl-gauge-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cl-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.cl-metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.cl-metric-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--cl-radius-md);
+  background: var(--cl-cream);
+  border: 1px solid var(--cl-border-light);
+}
+
+.cl-metric-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cl-metric-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--cl-green-light);
+  color: var(--cl-green-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-metric-icon-box.flame {
+  background: var(--cl-yellow-soft);
+  color: #B38600;
+}
+
+.cl-metric-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cl-text);
+}
+
+.cl-metric-value {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--cl-text);
+}
+
+/* Right Hero: Current Focus (Deep Dark Green) */
+.cl-focus-hero-card {
+  background: var(--cl-green-primary);
+  border-radius: var(--cl-radius-xl);
+  padding: 32px;
+  color: var(--cl-white);
+  box-shadow: var(--cl-shadow-md);
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.cl-focus-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 2;
+  max-width: 60%;
+}
+
+.cl-focus-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cl-yellow);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  margin-bottom: 12px;
+}
+
+.cl-focus-title {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--cl-white);
+  margin: 0 0 12px 0;
+  line-height: 1.15;
+}
+
+.cl-badge-needs-practice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--cl-yellow);
+  color: var(--cl-green-primary);
+  font-weight: 800;
+  font-size: 13px;
+  padding: 4px 14px;
+  border-radius: 9999px;
+  width: fit-content;
+  margin-bottom: 14px;
+}
+
+.cl-focus-desc {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cl-green-soft);
+  margin-bottom: 24px;
+}
+
+.cl-btn-yellow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--cl-yellow);
+  color: var(--cl-green-primary);
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 15px;
+  padding: 12px 24px;
+  border-radius: var(--cl-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: fit-content;
+  box-shadow: 0 4px 14px rgba(244, 197, 66, 0.35);
+}
+
+.cl-btn-yellow:hover {
+  background: #f7d264;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(244, 197, 66, 0.45);
+}
+
+.cl-focus-illustration-box {
+  width: 40%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.cl-focus-img {
+  width: 100%;
+  height: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: var(--cl-radius-md);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+}
+
+/* ==========================================================================
+   PHASE 9: AI RECOMMENDED FOR YOU (Soft Yellow/Cream Card)
+   ========================================================================== */
+.cl-ai-rec-card {
+  background: var(--cl-yellow-pale);
+  border: 1.5px solid var(--cl-yellow);
+  border-radius: var(--cl-radius-xl);
+  padding: 28px 32px;
+  box-shadow: 0 6px 20px rgba(244, 197, 66, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cl-ai-rec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cl-ai-badge-new {
+  background: var(--cl-yellow);
+  color: var(--cl-green-primary);
+  font-weight: 800;
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.cl-ai-inner-card {
+  background: var(--cl-white);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.cl-ai-inner-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex: 1;
+  min-width: 280px;
+}
+
+.cl-ai-icon-large {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--cl-radius-md);
+  background: var(--cl-yellow-soft);
+  color: var(--cl-green-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cl-ai-assignment-title {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--cl-text);
+  margin: 0 0 10px 0;
+}
+
+.cl-tags-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.cl-tag-pill {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 9999px;
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+  border: 1px solid var(--cl-border);
+}
+
+.cl-tag-pill.difficulty-easy {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.cl-tag-pill.difficulty-medium {
+  background: var(--cl-yellow-soft);
+  color: #8C6600;
+}
+
+.cl-tag-pill.difficulty-hard {
+  background: var(--cl-error-bg);
+  color: var(--cl-error);
+}
+
+.cl-ai-reason-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--cl-text-secondary);
+  line-height: 1.45;
+}
+
+.cl-ai-reason-box strong {
+  color: var(--cl-text);
+}
+
+.cl-btn-dark-green {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--cl-green-primary);
+  color: var(--cl-white);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 15px;
+  padding: 13px 28px;
+  border-radius: var(--cl-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cl-btn-dark-green:hover {
+  background: var(--cl-green-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(18, 60, 42, 0.25);
+}
+
+/* Empty State for AI Rec */
+.cl-ai-empty {
+  padding: 24px;
+  text-align: center;
+  background: var(--cl-white);
+  border-radius: var(--cl-radius-lg);
+  color: var(--cl-text-secondary);
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   PHASE 10: QUICK ACTIONS (4 Cards)
+   ========================================================================== */
+.cl-quick-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.cl-quick-action-card {
+  background: var(--cl-white);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-lg);
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.cl-quick-action-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--cl-green-forest);
+  box-shadow: var(--cl-shadow-md);
+}
+
+.cl-qa-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cl-qa-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--cl-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cl-qa-icon-box.green {
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+}
+
+.cl-qa-icon-box.yellow {
+  background: var(--cl-yellow-soft);
+  color: #A37700;
+}
+
+.cl-qa-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cl-text);
+  margin: 0 0 2px 0;
+}
+
+.cl-qa-subtitle {
+  font-size: 13px;
+  color: var(--cl-text-secondary);
+  margin: 0;
+}
+
+.cl-qa-arrow {
+  color: var(--cl-text-muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.cl-quick-action-card:hover .cl-qa-arrow {
+  transform: translateX(3px);
+  color: var(--cl-green-forest);
+}
+
+/* ==========================================================================
+   MIDDLE ROW: TOPICS TO IMPROVE + QUIZ & PATH
+   ========================================================================== */
+.cl-middle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+/* Topics to Improve Section */
+.cl-topics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cl-topic-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cl-border-light);
+}
+
+.cl-topic-row:last-child {
+  border-bottom: none;
+}
+
+.cl-topic-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 140px;
+}
+
+.cl-topic-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-topic-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cl-text);
+}
+
+.cl-topic-bar-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cl-topic-progress-bar {
+  flex: 1;
+  height: 12px;
+  background: var(--cl-green-light);
+  border-radius: 9999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.cl-topic-progress-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.8s ease;
+}
+
+.cl-topic-progress-fill.status-needs-practice {
+  background: var(--cl-yellow);
+}
+
+.cl-topic-progress-fill.status-improving {
+  background: #68B084;
+}
+
+.cl-topic-progress-fill.status-good {
+  background: var(--cl-green-forest);
+}
+
+.cl-topic-percent {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--cl-text);
+  min-width: 36px;
+  text-align: right;
+}
+
+.cl-topic-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  min-width: 104px;
+  text-align: center;
+}
+
+.cl-topic-badge.status-needs-practice {
+  background: var(--cl-yellow-soft);
+  color: #8A6400;
+}
+
+.cl-topic-badge.status-improving {
+  background: var(--cl-green-light);
+  color: #246B45;
+}
+
+.cl-topic-badge.status-good {
+  background: #DCF0E2;
+  color: var(--cl-green-primary);
+}
+
+/* Two Cards Stacked in Right Column: Daily AI Quiz & Learning Path */
+.cl-side-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Daily AI Quiz Card */
+.cl-quiz-badge {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 9999px;
+}
+
+.cl-quiz-badge.not-completed {
+  background: var(--cl-error-bg);
+  color: var(--cl-error);
+  border: 1px solid var(--cl-error-border);
+}
+
+.cl-quiz-badge.completed {
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+  border: 1px solid var(--cl-border);
+}
+
+.cl-chips-row {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+
+.cl-chip {
+  flex: 1;
+  min-width: 90px;
+  background: var(--cl-cream);
+  border: 1px solid var(--cl-border-light);
+  border-radius: var(--cl-radius-md);
+  padding: 10px 14px;
+  text-align: center;
+}
+
+.cl-chip-title {
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--cl-text);
+  margin-bottom: 2px;
+}
+
+.cl-chip-subtitle {
+  font-size: 12px;
+  color: var(--cl-text-secondary);
+}
+
+.cl-btn-full {
+  width: 100%;
+}
+
+/* Learning Path Card */
+.cl-path-focus-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cl-path-label {
+  font-size: 13px;
+  color: var(--cl-text-secondary);
+  font-weight: 600;
+}
+
+.cl-path-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cl-text);
+}
+
+.cl-path-progress-bar {
+  height: 10px;
+  background: var(--cl-green-light);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.cl-path-progress-fill {
+  height: 100%;
+  background: var(--cl-green-forest);
+  border-radius: 9999px;
+}
+
+.cl-next-act-card {
+  background: var(--cl-cream);
+  border: 1px solid var(--cl-border-light);
+  border-radius: var(--cl-radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.cl-next-act-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cl-next-act-icon {
+  color: var(--cl-green-forest);
+}
+
+.cl-next-act-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cl-text);
+  margin: 0 0 2px 0;
+}
+
+.cl-next-act-sub {
+  font-size: 12px;
+  color: var(--cl-text-secondary);
+  margin: 0;
+}
+
+/* ==========================================================================
+   BOTTOM ROW: RECENT ASSIGNMENTS & RECENT ACTIVITY
+   ========================================================================== */
+.cl-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 28px;
+}
+
+/* Recent Assignments Table */
+.cl-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.cl-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.cl-table th {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cl-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cl-border);
+}
+
+.cl-table td {
+  padding: 16px 14px;
+  font-size: 14px;
+  color: var(--cl-text);
+  border-bottom: 1px solid var(--cl-border-light);
+  vertical-align: middle;
+}
+
+.cl-table tr:last-child td {
+  border-bottom: none;
+}
+
+.cl-table-title {
+  font-weight: 700;
+  color: var(--cl-text);
+}
+
+.cl-source-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.cl-source-badge.ai {
+  background: var(--cl-yellow-soft);
+  color: #8C6600;
+}
+
+.cl-source-badge.teacher {
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+}
+
+.cl-status-pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 9999px;
+}
+
+.cl-status-pill.submitted {
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+}
+
+.cl-status-pill.graded {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.cl-status-pill.not-started {
+  background: var(--cl-error-bg);
+  color: var(--cl-error);
+}
+
+.cl-status-pill.pending {
+  background: var(--cl-yellow-soft);
+  color: #8C6600;
+}
+
+.cl-table-btn {
+  background: transparent;
+  border: 1px solid var(--cl-border);
+  color: var(--cl-green-forest);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: var(--cl-radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cl-table-btn:hover {
+  background: var(--cl-green-primary);
+  color: var(--cl-white);
+  border-color: var(--cl-green-primary);
+}
+
+/* Recent Activity Timeline */
+.cl-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  padding-left: 10px;
+}
+
+.cl-timeline-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  position: relative;
+}
+
+.cl-timeline-dot-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cl-timeline-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  border: 2px solid var(--cl-white);
+  box-shadow: var(--cl-shadow-sm);
+}
+
+.cl-timeline-dot.quiz {
+  background: var(--cl-yellow-soft);
+  color: #997000;
+}
+
+.cl-timeline-dot.submission {
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+}
+
+.cl-timeline-dot.mastery {
+  background: #E0EFE6;
+  color: var(--cl-green-primary);
+}
+
+.cl-timeline-line {
+  position: absolute;
+  top: 36px;
+  bottom: -20px;
+  width: 2px;
+  background: var(--cl-border);
+  z-index: 1;
+}
+
+.cl-timeline-item:last-child .cl-timeline-line {
+  display: none;
+}
+
+.cl-timeline-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cl-timeline-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cl-text);
+  margin: 0 0 2px 0;
+}
+
+.cl-timeline-desc {
+  font-size: 13px;
+  color: var(--cl-text-secondary);
+  margin: 0 0 4px 0;
+}
+
+.cl-timeline-time {
+  font-size: 12px;
+  color: var(--cl-text-muted);
+}
+
+.cl-timeline-score-badge {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: var(--cl-green-light);
+  color: var(--cl-green-forest);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   PHASE 16: MOTIVATION PROGRESS SECTION
+   ========================================================================== */
+.cl-motivation-card {
+  background: var(--cl-white);
+  border: 1px solid var(--cl-border);
+  border-radius: var(--cl-radius-xl);
+  padding: 32px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  box-shadow: var(--cl-shadow-sm);
+  flex-wrap: wrap;
+}
+
+.cl-motivation-left {
+  flex: 1;
+  min-width: 280px;
+}
+
+.cl-motivation-title {
+  font-family: var(--font-heading);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--cl-text);
+  margin: 0 0 8px 0;
+}
+
+.cl-motivation-text {
+  font-size: 15px;
+  color: var(--cl-text-secondary);
+  margin: 0 0 24px 0;
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.cl-motivation-img-box {
+  width: 280px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cl-motivation-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: var(--cl-radius-md);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN RULES
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .cl-hero-grid {
+    grid-template-columns: 1fr;
+  }
+  .cl-focus-content {
+    max-width: 65%;
+  }
+  .cl-middle-grid {
+    grid-template-columns: 1fr;
+  }
+  .cl-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  .cl-quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .cl-dashboard-container {
+    padding: 12px 16px 60px 16px;
+  }
+  .cl-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cl-search-input {
+    width: 100%;
+  }
+  .cl-search-wrapper {
+    width: 100%;
+  }
+  .cl-focus-hero-card {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .cl-focus-content {
+    max-width: 100%;
+  }
+  .cl-focus-illustration-box {
+    width: 100%;
+  }
+  .cl-quick-actions-grid {
+    grid-template-columns: 1fr;
+  }
+  .cl-card {
+    padding: 20px 20px;
+  }
+  .cl-progress-hero-card {
+    padding: 24px 20px;
+  }
+  .cl-progress-hero-body {
+    flex-direction: column;
+    align-items: center;
+  }
+  .cl-motivation-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cl-motivation-img-box {
+    width: 100%;
+    max-height: 160px;
+  }
+}

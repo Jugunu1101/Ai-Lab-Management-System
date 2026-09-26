@@ -43,14 +43,15 @@ const generateQuiz = async ({
   student,
   topics,
   language,
-  questionCount = 3,
+  questionCount = 10,
   difficulty = "medium",
+  excludedQuestions = [],
 }) => {
   try {
     const response = await axios.post(
       `${AI_SERVICE_URL}/ai/generate-quiz`,
-      { student, topics, language, questionCount, difficulty },
-      { timeout: 15000 }
+      { student, topics, language, questionCount, difficulty, excludedQuestions },
+      { timeout: 20000 }
     );
     return response.data;
   } catch (error) {
@@ -102,9 +103,37 @@ const generateWeeklyReport = async (reportData) => {
   }
 };
 
+const agentDecide = async (decisionData) => {
+  try {
+    const response = await axios.post(
+      `${AI_SERVICE_URL}/ai/agent/decide`,
+      decisionData,
+      { timeout: 15000 }
+    );
+    return response.data;
+  } catch (error) {
+    handleAxiosError(error, "Failed to get agent decision");
+  }
+};
+
+const generateAssignment = async (assignmentData) => {
+  try {
+    const response = await axios.post(
+      `${AI_SERVICE_URL}/ai/generate-assignment`,
+      assignmentData,
+      { timeout: 20000 }
+    );
+    return response.data;
+  } catch (error) {
+    handleAxiosError(error, "Failed to generate assignment");
+  }
+};
+
 module.exports = {
   analyzeSubmission,
   generateQuiz,
   generateLearningPath,
   generateWeeklyReport,
+  agentDecide,
+  generateAssignment,
 };

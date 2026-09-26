@@ -60,11 +60,14 @@ export const CreateClassModal = ({ open, onClose, onSuccess }) => {
         </Form.Item>
 
         <Form.Item
-          label="Course Code"
+          label="Course / Class Code"
           name="code"
-          rules={[{ required: true, message: "Please enter course code" }]}
+          help="Optional. Leave blank to auto-generate a 6-character student join code (e.g. K9F2Q8)."
         >
-          <Input placeholder="CS-201" />
+          <Input
+            placeholder="e.g. CS201 (or leave blank to auto-generate)"
+            style={{ textTransform: "uppercase" }}
+          />
         </Form.Item>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>

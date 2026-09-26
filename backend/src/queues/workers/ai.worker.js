@@ -107,6 +107,9 @@ const processAIAnalysis = async (job) => {
     mistakes: failedTests,
     aiMastery: aiResult?.mastery || [],
   });
+  
+  const { queueAgentDecision } = require("../agent.queue");
+  await queueAgentDecision(submission.userId.toString(), "SUBMISSION_COMPLETED");
 
   console.log(
     `[AIWorker] Completed analysis for: ${submissionId}`
@@ -154,4 +157,5 @@ const startAIWorker = () => {
 
 module.exports = {
   startAIWorker,
+  processAIAnalysis,
 };

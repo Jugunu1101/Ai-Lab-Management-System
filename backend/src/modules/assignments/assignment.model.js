@@ -24,6 +24,15 @@ const testCaseSchema = new mongoose.Schema(
   }
 );
 
+const exampleSchema = new mongoose.Schema(
+  {
+    input: { type: String, default: "" },
+    output: { type: String, default: "" },
+    explanation: { type: String, default: "" },
+  },
+  { _id: false }
+);
+
 const assignmentSchema = new mongoose.Schema(
   {
     title: {
@@ -37,6 +46,47 @@ const assignmentSchema = new mongoose.Schema(
     description: {
       type: String,
       required: true,
+      trim: true,
+    },
+
+    problemStatement: {
+      type: String,
+      trim: true,
+    },
+
+    constraints: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    inputFormat: {
+      type: String,
+      trim: true,
+    },
+
+    outputFormat: {
+      type: String,
+      trim: true,
+    },
+
+    examples: [exampleSchema],
+
+    starterCode: {
+      type: String,
+      trim: true,
+    },
+
+    hints: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    explanation: {
+      type: String,
       trim: true,
     },
 
@@ -87,6 +137,23 @@ const assignmentSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: false,
+    },
+
+    source: {
+      type: String,
+      default: "TEACHER",
+      enum: ["TEACHER", "AI_AGENT", "AI_GENERATED"],
+    },
+
+    agentReason: {
+      type: String,
+      required: false,
+    },
   },
   {
     timestamps: true,
@@ -97,5 +164,6 @@ const assignmentSchema = new mongoose.Schema(
 assignmentSchema.index({ classId: 1, createdAt: -1 });
 assignmentSchema.index({ createdBy: 1 });
 assignmentSchema.index({ deadline: 1 });
+assignmentSchema.index({ assignedTo: 1, source: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Assignment", assignmentSchema);
