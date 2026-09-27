@@ -139,6 +139,20 @@ app.get(
   analyticsController.getTeacherDashboard
 );
 
+// Static Frontend Serving & Single Page App Fallback (if built)
+const path = require("path");
+const fs = require("fs");
+const frontendDistPath = path.join(__dirname, "../../frontend/dist");
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.use((req, res, next) => {
+    if (req.method === "GET" && !req.path.startsWith("/api") && !req.path.startsWith("/health")) {
+      return res.sendFile(path.join(frontendDistPath, "index.html"));
+    }
+    next();
+  });
+}
+
 // 404 Route Handler
 app.use((req, res) => {
   res.status(404).json({

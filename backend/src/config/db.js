@@ -37,13 +37,22 @@ async function connectDB() {
   if (mongoose.connection.readyState === 1) return;
   if (isConnecting) return;
 
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-lab';
+  let uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai-lab';
   const dbName = process.env.MONGODB_DB_NAME || 'ai-lab';
+
+  // Normalize URI to ensure target database name is included
+  if (uri.includes('mongodb+srv://') || uri.includes('mongodb://')) {
+    if (uri.endsWith('/test') || uri.includes('/test?')) {
+      uri = uri.replace(/\/test(\?|$)/, `/${dbName}$1`);
+    } else if (uri.endsWith('/')) {
+      uri = `${uri}${dbName}`;
+    }
+  }
 
   try {
     isConnecting = true;
     const isSrv = uri.startsWith('mongodb+srv://');
-    console.log(`[MongoDB] Attempting connection to ${isSrv ? 'MongoDB Atlas (Remote)' : 'Local MongoDB'}...`);
+    console.log(`[MongoDB] Attempting connection to ${isSrv ? 'MongoDB Atlas (Remote)' : 'Local MongoDB'} (Target DB: ${dbName})...`);
 
     await mongoose.connect(uri, {
       dbName,
