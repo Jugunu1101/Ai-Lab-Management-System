@@ -114,11 +114,12 @@ const getSubmissions = async ({ userId, assignmentId }) => {
 const getSubmissionById = async ({
   submissionId,
   userId,
+  userRole = "STUDENT",
 }) => {
   const submission = await Submission.findById(submissionId)
     .populate(
       "assignmentId",
-      "title description language difficulty topics"
+      "title description language difficulty topics classId createdBy"
     );
 
   if (!submission) {
@@ -128,20 +129,95 @@ const getSubmissionById = async ({
     throw error;
   }
 
-  if (submission.userId.toString() !== userId) {
-    const error = new Error(
-      "You do not have access to this submission"
-    );
-    error.statusCode = 403;
-    error.code = "FORBIDDEN";
-    throw error;
+  // Role-based authorization
+  const subUserId = (submission.userId || submission.studentId)?.toString();
+  if (userRole === "STUDENT") {
+    if (subUserId && subUserId !== String(userId)) {
+      const error = new Error(
+        "You do not have access to this submission"
+      );
+      error.statusCode = 403;
+      error.code = "FORBIDDEN";
+      throw error;
+    }
+  } else if (userRole === "TEACHER") {
+    const assign = submission.assignmentId;
+    if (assign && assign.classId) {
+      const classData = await Class.findById(assign.classId);
+      if (
+        classData &&
+        classData.teacherId?.toString() !== String(userId) &&
+        assign.createdBy?.toString() !== String(userId)
+      ) {
+        const error = new Error("You do not have access to this submission");
+        error.statusCode = 403;
+        error.code = "FORBIDDEN";
+        throw error;
+      }
+    }
+  }
+
+  const assignment = submission.assignmentId?._id
+    ? await Assignment.findById(submission.assignmentId._id).select("testCases")
+    : null;
+
+  // If AI analysis is missing on an executed submission, generate and persist it
+  if (
+    ["PASSED", "FAILED", "COMPLETED"].includes(submission.status) &&
+    (!submission.aiAnalysis ||
+      (!submission.aiAnalysis.mastery?.length &&
+        !submission.aiAnalysis.recommendations?.length &&
+        !submission.aiAnalysis.mistakes?.length))
+  ) {
+    try {
+      const assign = submission.assignmentId || {};
+      const passedTests =
+        submission.testCasesPassed ??
+        (submission.status === "PASSED" ? (assignment?.testCases?.length || 1) : 0);
+      const totalTests =
+        submission.totalTestCases ||
+        (assignment?.testCases?.length || Math.max(1, passedTests));
+      const failedTests = Math.max(0, totalTests - passedTests);
+
+      const rawLang = (assign.language || submission.language || "cpp").toLowerCase();
+      const normalizedLang = rawLang === "c++" ? "cpp" : rawLang;
+
+      const topics =
+        Array.isArray(assign.topics) && assign.topics.length > 0
+          ? assign.topics
+          : [assign.topic || "basics"];
+
+      const aiResult = await analyzeSubmission({
+        student: { id: subUserId || String(userId) },
+        assignment: {
+          id: assign._id ? assign._id.toString() : (submission.assignmentId ? submission.assignmentId.toString() : "unknown-assignment"),
+          language: normalizedLang,
+          topics: topics,
+        },
+        submission: { code: submission.code || "// no code" },
+        testResults: { passed: passedTests, failed: failedTests, total: totalTests },
+      });
+
+      if (aiResult) {
+        const analysisData = {
+          mastery: aiResult.mastery || [],
+          weakTopics: aiResult.weakTopics || [],
+          mistakes: aiResult.mistakes || [],
+          recommendations: aiResult.recommendations || [],
+        };
+        submission.aiAnalysis = analysisData;
+        submission.markModified("aiAnalysis");
+        await Submission.updateOne(
+          { _id: submission._id },
+          { $set: { aiAnalysis: analysisData } }
+        );
+      }
+    } catch (aiErr) {
+      console.warn("On-demand AI analysis failed:", aiErr.message);
+    }
   }
 
   const submissionObject = submission.toObject();
-
-  const assignment = await Assignment.findById(
-    submission.assignmentId._id
-  ).select("testCases");
 
   if (assignment) {
     submissionObject.testResults = (submissionObject.testResults || []).map(
@@ -257,26 +333,53 @@ const getSubmissionDetailsForTeacher = async ({
   return submission;
 };
 
-const runPublicTests = async ({ assignmentId, userId, code, language }) => {
-  const assignment = await Assignment.findById(assignmentId);
+const runPublicTests = async ({ assignmentId, userId, code, language, testCases }) => {
+  let publicCases = [];
 
-  if (!assignment) {
-    const error = new Error("Assignment not found");
-    error.statusCode = 404;
-    error.code = "ASSIGNMENT_NOT_FOUND";
-    throw error;
+  // If public test cases are provided directly by caller (e.g. from loaded editor)
+  if (Array.isArray(testCases) && testCases.length > 0) {
+    publicCases = testCases.filter((tc) => !tc.isHidden);
   }
 
-  const classData = await Class.findById(assignment.classId);
+  // If test cases weren't passed directly, retrieve from assignment in database
+  if (publicCases.length === 0 && assignmentId) {
+    let assignment = null;
+    try {
+      assignment = await Assignment.findById(assignmentId);
+    } catch (dbErr) {
+      const error = new Error("Database is unavailable. Please start the local database or check your connection.");
+      error.statusCode = 503;
+      error.code = "DATABASE_UNAVAILABLE";
+      throw error;
+    }
 
-  if (!classData) {
-    const error = new Error("Class not found");
-    error.statusCode = 404;
-    error.code = "CLASS_NOT_FOUND";
-    throw error;
+    if (!assignment) {
+      const error = new Error("Assignment not found");
+      error.statusCode = 404;
+      error.code = "ASSIGNMENT_NOT_FOUND";
+      throw error;
+    }
+
+    if (assignment.classId) {
+      try {
+        const classData = await Class.findById(assignment.classId);
+        if (classData && userId) {
+          assertEnrolled(classData, userId);
+        }
+      } catch (classErr) {
+        if (classErr.statusCode === 403) throw classErr;
+      }
+    }
+
+    publicCases = (assignment.testCases || []).filter((tc) => !tc.isHidden);
   }
 
-  assertEnrolled(classData, userId);
+  if (publicCases.length === 0) {
+    const error = new Error("This assignment has no public test cases to run");
+    error.statusCode = 400;
+    error.code = "NO_PUBLIC_TESTS";
+    throw error;
+  }
 
   const normalizedLanguage = normalizeLanguage(language);
 
@@ -289,20 +392,21 @@ const runPublicTests = async ({ assignmentId, userId, code, language }) => {
     throw error;
   }
 
-  const publicCases = (assignment.testCases || []).filter((tc) => !tc.isHidden);
-
-  if (publicCases.length === 0) {
-    const error = new Error("This assignment has no public test cases to run");
-    error.statusCode = 400;
-    error.code = "NO_PUBLIC_TESTS";
+  let executionResult;
+  try {
+    executionResult = await executeTestCases({
+      code,
+      language: normalizedLanguage,
+      testCases: publicCases,
+    });
+  } catch (execErr) {
+    console.error("[CodeExecutor] Execution failed:", execErr.message);
+    const error = new Error("Code execution service is unavailable. Please make sure the execution service is running.");
+    error.statusCode = 503;
+    error.code = "CODE_EXECUTION_UNAVAILABLE";
     throw error;
   }
 
-  const executionResult = await executeTestCases({
-    code,
-    language: normalizedLanguage,
-    testCases: publicCases,
-  });
 
   const testResults = executionResult.testResults || [];
   const passedCount = testResults.filter((result) => result.passed).length;
@@ -438,12 +542,14 @@ const executeSubmission = async ({ submissionId, skipAI = false }) => {
       }
     }
 
-    await submission.save();
+    const assignmentTopics = (assignment.topics && assignment.topics.length > 0)
+      ? assignment.topics
+      : [assignment.topic || "basics"];
 
     await updateProgressFromSubmission({
       studentId: submission.userId,
       language: submission.language,
-      topics: assignment.topics,
+      topics: assignmentTopics,
       score: submission.score,
       submissionSuccess,
       attempts,
@@ -451,6 +557,41 @@ const executeSubmission = async ({ submissionId, skipAI = false }) => {
       aiMastery: aiResult?.mastery || [],
     });
 
+    // Record AI Intervention if student struggled or weak topics detected
+    if (submission.status !== "PASSED" || submission.score < 60 || (aiResult?.weakTopics && aiResult.weakTopics.length > 0)) {
+      try {
+        const { recordIntervention } = require("../ai/aiIntervention.service");
+        const targetTopic = (aiResult?.weakTopics && aiResult.weakTopics.length > 0)
+          ? aiResult.weakTopics[0]
+          : assignmentTopics[0];
+        
+        const previousScore = submission.score;
+        const reason = (submission.status === "FAILED" || submission.status === "ERROR")
+          ? `Failed test cases on "${assignment.title}".`
+          : `Submission score (${submission.score}%) was below mastery expectations.`;
+        
+        const recommendation = (aiResult?.recommendations && aiResult.recommendations.length > 0)
+          ? aiResult.recommendations[0]
+          : `Review ${targetTopic} fundamentals and practice edge cases for this problem.`;
+
+        await recordIntervention({
+          studentId: submission.userId,
+          classId: assignment.classId,
+          type: "FAILED_ASSIGNMENT",
+          topic: targetTopic,
+          language: submission.language,
+          reason,
+          recommendation,
+          previousScore,
+          source: "ASSIGNMENT_SUBMISSION",
+          referenceId: submission._id,
+        });
+      } catch (interventionErr) {
+        console.warn("Failed to record submission intervention:", interventionErr.message);
+      }
+    }
+
+    await submission.save();
     return submission;
   } catch (error) {
     submission.status = "FAILED";

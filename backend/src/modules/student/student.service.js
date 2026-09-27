@@ -16,13 +16,14 @@ const DASHBOARD_CACHE_TTL_SEC = 20;
 const invalidateStudentDashboardCache = async (studentId) => {
   try {
     const redis = getRedisConnection();
-    if (redis) {
+    if (redis && redis.status === "ready") {
       await redis.del(`student:dashboard:${studentId}`);
     }
   } catch (err) {
     // Non-blocking fail-safe
   }
 };
+
 
 const getStudentDashboard = async ({ studentId }) => {
   const cacheKey = `student:dashboard:${studentId}`;
@@ -64,8 +65,13 @@ const getStudentDashboard = async ({ studentId }) => {
       todayQuiz,
       aiAssignment,
     ] = await Promise.all([
-      // 1. Enrolled classes (project only _id)
-      Class.find({ students: studentObjectId })
+      Class.find({
+        $or: [
+          { students: studentId },
+          { students: studentObjectId },
+          { students: { $in: [studentId, studentObjectId] } },
+        ],
+      })
         .select("_id")
         .lean(),
       // 2. Combined total submissions count & average score in single aggregation
@@ -94,10 +100,13 @@ const getStudentDashboard = async ({ studentId }) => {
       // 5. Today's quiz attempt (uses compound index)
       QuizAttempt.findOne({
         studentId: studentObjectId,
-        completedAt: { $gte: startOfDay, $lte: endOfDay },
+        $or: [
+          { completedAt: { $gte: startOfDay, $lte: endOfDay } },
+          { createdAt: { $gte: startOfDay, $lte: endOfDay } },
+        ],
       })
         .select("score completedAt")
-        .sort({ completedAt: -1 })
+        .sort({ completedAt: -1, createdAt: -1 })
         .lean(),
       // 6. Today's quiz existence check
       Quiz.findOne({
@@ -112,7 +121,7 @@ const getStudentDashboard = async ({ studentId }) => {
       // 7. Pending AI recommended assignment
       Assignment.findOne({
         assignedTo: studentObjectId,
-        source: "AI_AGENT",
+        source: { $in: ["AI_AGENT", "AI_GENERATED"] },
       })
         .select("title description topics language difficulty agentReason")
         .sort({ createdAt: -1 })
@@ -143,7 +152,18 @@ const getStudentDashboard = async ({ studentId }) => {
 
     const subStats = submissionStatsResult[0] || {};
     const totalSubmissions = subStats.totalSubmissions || 0;
-    const averageScore = Math.round(subStats.avgScore || 0);
+    const avgSubmissionScore = subStats.avgScore !== undefined && subStats.avgScore !== null
+      ? Math.round(subStats.avgScore)
+      : 0;
+
+    // Calculate actual overall mastery from student's topic progress records
+    let overallMastery = 0;
+    if (progressRecords && progressRecords.length > 0) {
+      const totalMastery = progressRecords.reduce((sum, p) => sum + (p.masteryScore || 0), 0);
+      overallMastery = Math.round(totalMastery / progressRecords.length);
+    } else if (totalSubmissions > 0) {
+      overallMastery = avgSubmissionScore;
+    }
 
     const weakTopics = progressRecords
       .filter((p) => p.masteryScore < 60)
@@ -188,7 +208,8 @@ const getStudentDashboard = async ({ studentId }) => {
       enrolledClassesCount: enrolledClasses.length,
       activeAssignmentsCount,
       totalSubmissions,
-      averageScore,
+      averageScore: overallMastery > 0 ? overallMastery : avgSubmissionScore,
+      overallMastery,
       todayQuizStatus,
       weakTopics,
       strongTopics,
@@ -271,14 +292,11 @@ const getStudentProgress = async ({ studentId, language }) => {
   };
 };
 
-const getStudentTopics = async ({ studentId, language }) => {
-  const query = { studentId };
-  if (language) {
-    query.language = language.toLowerCase();
-  }
+const { syncStudentProgressFromDatabase } = require("../progress/progress.service");
 
-  const topics = await Progress.find(query).sort({ masteryScore: 1 });
-  return topics;
+const getStudentTopics = async ({ studentId, classId, language }) => {
+  const result = await syncStudentProgressFromDatabase({ studentId, classId, language });
+  return result;
 };
 
 const capitalize = (str) => {
@@ -328,18 +346,39 @@ const getStudentLearningPath = async ({ studentId, language }) => {
   const [
     progressRecords,
     todayDailyQuiz,
+    todayAttempt,
     enrolledClasses,
     cachedAnalysis,
     pendingAIAssignment,
   ] = await Promise.all([
     Progress.find(progressQuery).sort({ masteryScore: 1 }).lean(),
     Quiz.findOne({
+      studentId: studentObjectId,
       $or: [
-        { studentId: studentObjectId, createdAt: { $gte: startOfDay, $lte: endOfDay }, targetDate: { $exists: true, $ne: null } },
+        { createdAt: { $gte: startOfDay, $lte: endOfDay } },
         { targetDate: { $gte: startOfDay, $lte: endOfDay } },
       ],
+    })
+      .select("_id")
+      .sort({ createdAt: -1 })
+      .lean(),
+    QuizAttempt.findOne({
+      studentId: studentObjectId,
+      $or: [
+        { completedAt: { $gte: startOfDay, $lte: endOfDay } },
+        { createdAt: { $gte: startOfDay, $lte: endOfDay } },
+      ],
+    })
+      .select("_id score completedAt")
+      .sort({ completedAt: -1, createdAt: -1 })
+      .lean(),
+    Class.find({
+      $or: [
+        { students: studentId },
+        { students: studentObjectId },
+        { students: { $in: [studentId, studentObjectId] } },
+      ],
     }).select("_id").lean(),
-    Class.find({ students: studentObjectId }).select("_id").lean(),
     AIAnalysis.findOne({
       studentId: studentObjectId,
       type: "LEARNING_PATH",
@@ -347,7 +386,7 @@ const getStudentLearningPath = async ({ studentId, language }) => {
     }).sort({ createdAt: -1 }).lean(),
     Assignment.findOne({
       assignedTo: studentObjectId,
-      source: "AI_AGENT",
+      source: { $in: ["AI_AGENT", "AI_GENERATED"] },
     }).sort({ createdAt: -1 }).lean(),
   ]);
 
@@ -376,7 +415,7 @@ const getStudentLearningPath = async ({ studentId, language }) => {
       : null,
   ]);
 
-  const hasCompletedDailyQuiz = !!todayDailyAttempt;
+  const hasCompletedDailyQuiz = Boolean(todayAttempt || todayDailyAttempt);
 
   const mastery = progressRecords.map((p) => ({
     topic: p.topic,
@@ -452,7 +491,7 @@ const getStudentLearningPath = async ({ studentId, language }) => {
     const existingTopics = new Set(aiResult.steps.map((s) => s.topic.toLowerCase()));
     for (const prog of progressRecords) {
       if (!existingTopics.has(prog.topic.toLowerCase())) {
-        aiResult.steps.push({
+        const newStep = {
           step: aiResult.steps.length + 1,
           topic: prog.topic,
           priority: prog.masteryScore < 60 ? "HIGH" : "LOW",
@@ -460,7 +499,12 @@ const getStudentLearningPath = async ({ studentId, language }) => {
           objective: `Master core principles and common patterns for ${prog.topic}.`,
           suggestedActivity: `Solve targeted practice problems and quizzes on ${prog.topic}.`,
           status: "PENDING",
-        });
+        };
+        if (prog.masteryScore < 60) {
+          aiResult.steps.unshift(newStep);
+        } else {
+          aiResult.steps.push(newStep);
+        }
         existingTopics.add(prog.topic.toLowerCase());
       }
     }

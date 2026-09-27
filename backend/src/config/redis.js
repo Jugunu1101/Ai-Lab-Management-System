@@ -6,6 +6,10 @@ const getRedisOptions = () => {
   const options = {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
+    retryStrategy: (times) => {
+      if (times > 3) return null;
+      return Math.min(times * 1000, 3000);
+    },
   };
   if (process.env.REDIS_PASSWORD) {
     options.password = process.env.REDIS_PASSWORD;

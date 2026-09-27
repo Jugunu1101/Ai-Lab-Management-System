@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Typography, Select, Row, Col, Space } from "antd";
 import {
   EyeOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
   FilterOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
+import { Table, Button, Typography, Select, Row, Col, Space, Input } from "antd";
 import SubmissionResultModal from "../../components/student/SubmissionResultModal";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorState from "../../components/shared/ErrorState";
@@ -21,6 +22,7 @@ export const SubmissionHistory = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -29,12 +31,9 @@ export const SubmissionHistory = () => {
     setError(null);
     try {
       const res = await submissionService.getSubmissions();
-      const data = res.data?.submissions || res.submissions || res.data || [];
-      if (Array.isArray(data) && data.length > 0) {
-        setSubmissions(data);
-      } else {
-        setSubmissions([]);
-      }
+      const raw = res.data?.data || res.data?.submissions || res.submissions || res.data || res || [];
+      const data = Array.isArray(raw) ? raw : [];
+      setSubmissions(data);
     } catch (err) {
       setError(err.message || "Failed to load submission history");
     } finally {
@@ -46,9 +45,15 @@ export const SubmissionHistory = () => {
     fetchSubmissions();
   }, []);
 
+  const cleanTerm = (searchTerm || "").trim().toLowerCase();
   const filtered = submissions.filter((sub) => {
-    if (statusFilter === "ALL") return true;
-    return sub.status === statusFilter;
+    const matchStatus = statusFilter === "ALL" || sub.status === statusFilter;
+    if (!matchStatus) return false;
+    if (!cleanTerm) return true;
+    const title = (sub.assignmentTitle || sub.assignmentId?.title || "").toLowerCase();
+    const lang = (sub.language || "").toLowerCase();
+    const status = (sub.status || "").toLowerCase();
+    return title.includes(cleanTerm) || lang.includes(cleanTerm) || status.includes(cleanTerm);
   });
 
   const columns = [
@@ -58,12 +63,9 @@ export const SubmissionHistory = () => {
       key: "assignmentTitle",
       render: (text, rec) => (
         <div>
-          <div style={{ fontWeight: 700, fontSize: 15, color: "#18231D", marginBottom: 2 }}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)" }}>
             {text || rec.assignmentId?.title || "Problem Submission"}
           </div>
-          <span style={{ fontSize: 12, color: "#748078", fontFamily: "var(--font-mono)" }}>
-            ID: {rec._id}
-          </span>
         </div>
       ),
     },
@@ -74,9 +76,9 @@ export const SubmissionHistory = () => {
       render: (lang) => (
         <span
           style={{
-            background: "#EDF6EA",
-            color: "#174832",
-            border: "1px solid #DCEEDD",
+            background: "var(--cl-green-light)",
+            color: "var(--cl-green-dark)",
+            border: "1px solid var(--border-subtle)",
             borderRadius: 6,
             padding: "3px 10px",
             fontSize: 12,
@@ -100,9 +102,9 @@ export const SubmissionHistory = () => {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              background: isPassed ? "#EDF6EA" : "#FDF1F1",
-              color: isPassed ? "#2F7D4A" : "#C83C3C",
-              border: isPassed ? "1px solid #DCEEDD" : "1px solid #F8D7D7",
+              background: isPassed ? "rgba(47, 125, 74, 0.15)" : "rgba(200, 60, 60, 0.15)",
+              color: isPassed ? "var(--cl-green-deep)" : "var(--error)",
+              border: isPassed ? "1px solid rgba(47, 125, 74, 0.3)" : "1px solid rgba(200, 60, 60, 0.3)",
               borderRadius: 8,
               padding: "4px 12px",
               fontSize: 13,
@@ -120,7 +122,7 @@ export const SubmissionHistory = () => {
       dataIndex: "executionTimeMs",
       key: "executionTimeMs",
       render: (time) => (
-        <span style={{ fontSize: 14, color: "#59665E" }}>
+        <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>
           {time ? formatDuration(time) : "-"}
         </span>
       ),
@@ -130,7 +132,7 @@ export const SubmissionHistory = () => {
       dataIndex: "memoryUsedBytes",
       key: "memoryUsedBytes",
       render: (mem) => (
-        <span style={{ fontSize: 14, color: "#59665E" }}>
+        <span style={{ fontSize: 14, color: "var(--text-secondary)" }}>
           {mem ? formatBytes(mem) : "-"}
         </span>
       ),
@@ -140,7 +142,7 @@ export const SubmissionHistory = () => {
       dataIndex: "createdAt",
       key: "createdAt",
       render: (date) => (
-        <span style={{ fontSize: 14, color: "#18231D" }}>
+        <span style={{ fontSize: 14, color: "var(--text-primary)" }}>
           {formatDate(date, true)}
         </span>
       ),
@@ -184,26 +186,36 @@ export const SubmissionHistory = () => {
           </p>
         </div>
 
-        <Select
-          value={statusFilter}
-          onChange={setStatusFilter}
-          style={{ width: 180, height: 46 }}
-          suffixIcon={<FilterOutlined style={{ color: "#748078" }} />}
-        >
-          <Option value="ALL">All Statuses</Option>
-          <Option value="PASSED">Passed Only</Option>
-          <Option value="FAILED">Failed Only</Option>
-        </Select>
+        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+          <Input
+            prefix={<SearchOutlined style={{ color: "var(--cl-text-muted)" }} />}
+            placeholder="Search submissions by title, language..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            allowClear
+            style={{ width: 280, height: 46, borderRadius: 12 }}
+          />
+          <Select
+            value={statusFilter}
+            onChange={setStatusFilter}
+            style={{ width: 160, height: 46 }}
+            suffixIcon={<FilterOutlined style={{ color: "var(--text-muted)" }} />}
+          >
+            <Option value="ALL">All Statuses</Option>
+            <Option value="PASSED">Passed Only</Option>
+            <Option value="FAILED">Failed Only</Option>
+          </Select>
+        </div>
       </div>
 
       {/* Main Table Card */}
       <div
         className="cl-card"
         style={{
-          background: "#FFFFFF",
+          background: "var(--bg-card)",
           borderRadius: 20,
           padding: 0,
-          border: "1px solid #DDE5DC",
+          border: "1px solid var(--border-color)",
           overflow: "hidden",
           boxShadow: "0 2px 8px rgba(18, 60, 42, 0.04)",
         }}

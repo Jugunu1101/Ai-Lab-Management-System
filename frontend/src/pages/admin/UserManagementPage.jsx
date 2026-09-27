@@ -58,7 +58,7 @@ export const UserManagementPage = () => {
     setError(null);
     try {
       const [usersRes, pendingRes, collegeRes] = await Promise.allSettled([
-        adminService.getUsers(),
+        adminService.getUsers({ limit: 500 }),
         adminService.getPendingTeachers(),
         adminService.getCollege(),
       ]);
@@ -151,11 +151,14 @@ export const UserManagementPage = () => {
     }
   };
 
+  const cleanTerm = (searchTerm || "").trim().toLowerCase();
   const filteredUsers = users.filter((u) => {
     const matchSearch =
-      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.department?.toLowerCase().includes(searchTerm.toLowerCase());
+      !cleanTerm ||
+      u.name?.toLowerCase().includes(cleanTerm) ||
+      u.email?.toLowerCase().includes(cleanTerm) ||
+      u.department?.toLowerCase().includes(cleanTerm) ||
+      u.role?.toLowerCase().includes(cleanTerm);
 
     const matchRole = selectedRole === "ALL" || u.role === selectedRole;
     return matchSearch && matchRole;

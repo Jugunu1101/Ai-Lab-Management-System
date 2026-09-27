@@ -1,0 +1,743 @@
+/* ==========================================================================
+   CODELAB AI — INSTRUCTOR DASHBOARD STYLESHEET
+   Spacious, modern SaaS executive analytics dashboard
+   Theme tokens: Deep Forest Green (#123C2A, #246B45), Emerald (#10b981), Warm Off-White
+   ========================================================================== */
+
+.teacher-dashboard-page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 24px 32px 48px;
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+/* ── 1. Header Section ── */
+.teacher-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 26px;
+  flex-wrap: nowrap;
+}
+
+.teacher-header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-header-left h1 {
+  font-family: var(--font-heading, 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  line-height: 1.2;
+}
+
+.teacher-header-subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+  font-weight: 450;
+}
+
+.teacher-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.teacher-btn-primary {
+  background: var(--cl-green-forest, #246B45) !important;
+  border: 1px solid var(--cl-green-forest, #246B45) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border-radius: 9px !important;
+  height: 38px !important;
+  padding: 0 16px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  box-shadow: 0 1px 3px rgba(36, 107, 69, 0.2) !important;
+  transition: all 0.18s ease !important;
+}
+
+.teacher-btn-primary:hover {
+  background: #1B5138 !important;
+  border-color: #1B5138 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(36, 107, 69, 0.28) !important;
+}
+
+.teacher-btn-secondary {
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  border-radius: 9px !important;
+  height: 38px !important;
+  padding: 0 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  transition: all 0.15s ease !important;
+}
+
+.teacher-btn-secondary:hover {
+  background: var(--surface-hover) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── 2. 4-Column KPI Grid ── */
+.teacher-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 26px;
+}
+
+.teacher-kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 15px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 118px;
+  min-height: 118px;
+  max-height: 118px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.teacher-kpi-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: rgba(36, 107, 69, 0.35);
+}
+
+.teacher-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teacher-kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.teacher-kpi-icon-wrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.teacher-kpi-value {
+  font-family: var(--font-heading, 'Outfit', -apple-system, sans-serif);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+  margin: 4px 0 2px 0;
+  letter-spacing: -0.02em;
+}
+
+.teacher-kpi-subtext {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 3. Main Grid (Chart 2fr + Active Classes 1fr) ── */
+.teacher-main-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+/* Base Panel Card */
+.teacher-panel-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 15px;
+  padding: 18px 20px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-panel-fixed-main {
+  min-height: 295px;
+  height: auto;
+}
+
+.teacher-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.teacher-panel-title-wrap h3 {
+  font-family: var(--font-heading, 'Outfit', sans-serif);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 2px 0;
+  letter-spacing: -0.01em;
+}
+
+.teacher-panel-title-wrap p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.teacher-panel-header-action {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cl-green-forest, #246B45);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: opacity 0.15s ease;
+}
+
+.teacher-panel-header-action:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ── Chart Presentation (Forest Green + Emerald Palette) ── */
+.teacher-chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.teacher-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.teacher-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.teacher-chart-wrapper {
+  height: 210px;
+  width: 100%;
+  flex: 1;
+}
+
+/* ── Active Classes List (Clean & Calm) ── */
+.teacher-classes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 2px;
+}
+
+.teacher-class-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.15s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.teacher-class-row:hover {
+  background: var(--surface-hover);
+  border-color: rgba(36, 107, 69, 0.4);
+  transform: translateX(1px);
+}
+
+.teacher-class-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teacher-class-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-class-mastery-score {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.teacher-class-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.teacher-class-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.teacher-class-code-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: rgba(36, 107, 69, 0.08);
+  color: var(--cl-green-forest, #246B45);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid rgba(36, 107, 69, 0.2);
+}
+
+.teacher-class-progress-bar {
+  width: 60px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-color);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.teacher-class-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ── 4. Bottom Grid (Recent Submissions + Students Needing Attention + Quick Actions) ── */
+.teacher-bottom-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+.teacher-panel-fixed-bottom {
+  padding: 20px 22px;
+  min-height: 320px;
+  height: auto;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-panel-fixed-bottom .teacher-panel-header {
+  margin-bottom: 16px;
+}
+
+/* Avatar Badge */
+.teacher-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(36, 107, 69, 0.1);
+  color: var(--cl-green-forest, #246B45);
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Recent Submissions List */
+.teacher-submissions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  flex: 1;
+}
+
+.teacher-submission-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  min-height: 58px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  gap: 12px;
+  transition: background 0.15s ease;
+}
+
+.teacher-submission-item:hover {
+  background: var(--surface-hover);
+}
+
+.teacher-submission-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.teacher-submission-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.teacher-submission-student {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-submission-details {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-submission-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.teacher-submission-time {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Students Needing Attention List */
+.teacher-atrisk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  flex: 1;
+}
+
+.teacher-atrisk-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  min-height: 58px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  gap: 12px;
+  transition: all 0.15s ease;
+}
+
+.teacher-atrisk-item:hover {
+  background: var(--surface-hover);
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.teacher-atrisk-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.teacher-atrisk-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.teacher-atrisk-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-atrisk-class {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-atrisk-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.teacher-atrisk-score-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  line-height: 1.2;
+}
+
+.teacher-atrisk-btn {
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  height: 28px !important;
+  padding: 0 10px !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+.teacher-atrisk-btn:hover {
+  background: var(--surface-hover) !important;
+  border-color: var(--cl-green-forest, #246B45) !important;
+  color: var(--cl-green-forest, #246B45) !important;
+}
+
+.teacher-suggestion-box {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+/* Quick Actions List (Clean, Calm, Muted Tints) */
+.teacher-actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.teacher-action-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  min-height: 56px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.teacher-action-tile:hover {
+  background: var(--surface-hover);
+  border-color: rgba(36, 107, 69, 0.4);
+  transform: translateX(2px);
+}
+
+.teacher-action-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.teacher-action-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.teacher-action-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.teacher-action-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teacher-action-arrow {
+  color: var(--text-secondary);
+  font-size: 10px;
+  transition: transform 0.15s ease;
+}
+
+.teacher-action-tile:hover .teacher-action-arrow {
+  color: var(--cl-green-forest, #246B45);
+  transform: translateX(2px);
+}
+
+/* Clean Empty State */
+.teacher-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 14px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  gap: 5px;
+  background: var(--bg-primary);
+  border-radius: 10px;
+  border: 1px dashed var(--border-color);
+  flex: 1;
+}
+
+.teacher-empty-icon {
+  font-size: 22px;
+  opacity: 0.4;
+}
+
+/* ── Responsive Breakpoints ── */
+@media (max-width: 1199px) {
+  .teacher-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .teacher-bottom-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .teacher-bottom-grid > :nth-child(3) {
+    grid-column: span 2;
+  }
+  .teacher-panel-fixed-main,
+  .teacher-panel-fixed-bottom {
+    height: auto;
+    max-height: none;
+  }
+}
+
+@media (max-width: 880px) {
+  .teacher-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .teacher-header-actions {
+    flex-wrap: wrap;
+  }
+  .teacher-main-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .teacher-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .teacher-bottom-grid > :nth-child(3) {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .teacher-dashboard-page {
+    padding: 14px 16px 32px;
+  }
+  .teacher-header-left h1 {
+    font-size: 22px;
+  }
+  .teacher-header-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+  .teacher-header-actions > .teacher-btn-primary {
+    grid-column: span 2;
+    justify-content: center;
+  }
+  .teacher-kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .teacher-bottom-grid {
+    gap: 16px;
+  }
+}

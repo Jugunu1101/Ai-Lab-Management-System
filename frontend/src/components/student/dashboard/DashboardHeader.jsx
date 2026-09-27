@@ -1,16 +1,29 @@
 import React, { useState } from "react";
-import { Search, Bell, ChevronDown } from "lucide-react";
+import { Search, Bell, ChevronDown, X } from "lucide-react";
 import { Dropdown } from "antd";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/AuthContext";
 import { getInitials } from "../../../utils/formatters";
 
 export const DashboardHeader = ({ user, onSearch }) => {
+  const navigate = useNavigate();
   const { logout } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
     if (onSearch) onSearch(e.target.value);
+  };
+
+  const handleClear = () => {
+    setSearchTerm("");
+    if (onSearch) onSearch("");
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && searchTerm.trim()) {
+      navigate(`/student/assignments?search=${encodeURIComponent(searchTerm.trim())}`);
+    }
   };
 
   const getGreeting = () => {
@@ -51,16 +64,39 @@ export const DashboardHeader = ({ user, onSearch }) => {
       </div>
 
       <div className="cl-header-actions">
-        <div className="cl-search-wrapper">
+        <div className="cl-search-wrapper" style={{ position: "relative" }}>
           <Search size={18} className="cl-search-icon" />
           <input
             type="text"
             className="cl-search-input"
-            placeholder="Search anything..."
+            placeholder="Search assignment name..."
             value={searchTerm}
             onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
             aria-label="Search dashboard"
           />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={handleClear}
+              aria-label="Clear search"
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                padding: 2,
+                display: "flex",
+                alignItems: "center",
+                color: "var(--cl-text-muted)",
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
         </div>
 
         <button

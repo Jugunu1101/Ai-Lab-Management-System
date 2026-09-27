@@ -50,14 +50,18 @@ const getWeeklyReports = async (req, res, next) => {
 
 const generateWeeklyReport = async (req, res, next) => {
   try {
+    const { startDate, endDate } = req.body || {};
     const result = await reportsService.triggerWeeklyReportGeneration({
       classId: req.params.classId,
       teacherId: req.user.userId,
+      userRole: req.user.role,
+      startDate,
+      endDate,
     });
 
-    return res.status(202).json({
+    return res.status(200).json({
       success: true,
-      message: "Weekly report generation enqueued",
+      message: "Weekly report generated successfully",
       data: result,
     });
   } catch (error) {

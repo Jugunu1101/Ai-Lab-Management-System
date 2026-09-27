@@ -20,12 +20,21 @@ const processAssignmentGeneration = async (job) => {
   // Get a teacher or system user for 'createdBy'
   const teacherId = studentClass.teacherId;
 
+  // Retrieve existing assignments for the student / class to prevent duplicates
+  const existingAssignments = await Assignment.find({
+    $or: [{ assignedTo: studentId }, { classId: studentClass._id }],
+  }).select("title");
+  const excludedTitles = existingAssignments.map((a) =>
+    a.title.replace(/^\[AI Practice\]\s*/i, "").trim()
+  );
+
   const aiResult = await generateAssignment({
     studentId,
     targetTopics,
     language,
     difficulty,
     reason,
+    excludedTitles,
   });
 
   if (!aiResult || !aiResult.problemStatement) {

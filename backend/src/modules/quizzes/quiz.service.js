@@ -20,6 +20,55 @@ const createQuiz = async ({ title, language, topic, questions, teacherId }) => {
   return quiz;
 };
 
+const shuffleQuestionOptions = (question) => {
+  if (!question || !Array.isArray(question.options) || question.options.length !== 4) {
+    return question;
+  }
+
+  const rawAns = String(question.correctAnswer || "A").trim();
+  const letters = ["A", "B", "C", "D"];
+
+  let correctIdx = 0;
+  if (/^[0-3]$/.test(rawAns)) {
+    correctIdx = parseInt(rawAns, 10);
+  } else if (/^[A-Da-d]/.test(rawAns)) {
+    correctIdx = letters.indexOf(rawAns.charAt(0).toUpperCase());
+  } else {
+    const cleanRaw = rawAns.replace(/^[A-Da-d][\s.):\-\]]+\s*/, "").trim().toLowerCase();
+    const foundIdx = question.options.findIndex((opt) => {
+      const cleanOpt = String(opt).replace(/^[A-Da-d][\s.):\-\]]+\s*/, "").trim().toLowerCase();
+      return cleanOpt === cleanRaw || String(opt).trim().toLowerCase() === rawAns.toLowerCase();
+    });
+    if (foundIdx !== -1) correctIdx = foundIdx;
+  }
+
+  if (correctIdx < 0 || correctIdx >= 4) correctIdx = 0;
+
+  const items = question.options.map((opt, idx) => ({
+    text: String(opt).replace(/^[A-Da-d][\s.):\-\]]+\s*/, "").trim(),
+    isCorrect: idx === correctIdx,
+  }));
+
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [items[i], items[j]] = [items[j], items[i]];
+  }
+
+  let newCorrectLetter = "A";
+  const newOptions = items.map((item, idx) => {
+    if (item.isCorrect) {
+      newCorrectLetter = letters[idx];
+    }
+    return `${letters[idx]}) ${item.text}`;
+  });
+
+  return {
+    ...question,
+    options: newOptions,
+    correctAnswer: newCorrectLetter,
+  };
+};
+
 const createAIQuiz = async ({ studentId, language, topics, questionCount = 10 }) => {
   const aiResult = await generateQuiz({
     student: {
@@ -41,14 +90,16 @@ const createAIQuiz = async ({ studentId, language, topics, questionCount = 10 })
     throw error;
   }
 
-  const questions = aiResult.questions.map((question) => ({
-    question: question.question,
-    options: question.options,
-    correctAnswer: question.correctAnswer,
-    explanation: question.explanation || "",
-    topic: question.topic || topics[0],
-    difficulty: question.difficulty || "medium",
-  }));
+  const questions = aiResult.questions.map((question) =>
+    shuffleQuestionOptions({
+      question: question.question,
+      options: question.options,
+      correctAnswer: question.correctAnswer,
+      explanation: question.explanation || "",
+      topic: question.topic || topics[0],
+      difficulty: question.difficulty || "medium",
+    })
+  );
 
   return await Quiz.create({
     title: `AI Quiz - ${topics.join(", ")}`,
@@ -171,7 +222,15 @@ const validateQuestionTopic = (question, requestedTopics) => {
 
   if (topics.length === 0) return true;
 
-  // Build combined text to analyze: question + options + explanation
+  // 1. Direct topic metadata match
+  if (question.topic) {
+    const qTopic = question.topic.toLowerCase().trim();
+    if (topics.some((t) => qTopic === t || qTopic.includes(t) || t.includes(qTopic))) {
+      return true;
+    }
+  }
+
+  // 2. Build combined text to analyze: question + options + explanation
   const optionsText = Array.isArray(question.options) ? question.options.join(" ") : "";
   const combinedText = `${question.question} ${optionsText} ${question.explanation || ""}`;
 
@@ -277,14 +336,16 @@ const generateUniqueQuizQuestions = async ({
           if (!seenNormalized.has(norm) && !seenInCurrentQuiz.has(norm)) {
             seenNormalized.add(norm);
             seenInCurrentQuiz.add(norm);
-            collectedQuestions.push({
-              question: item.question,
-              options: item.options,
-              correctAnswer: item.correctAnswer,
-              explanation: item.explanation || "",
-              topic: item.topic || topics[0],
-              difficulty: item.difficulty || difficulty,
-            });
+            collectedQuestions.push(
+              shuffleQuestionOptions({
+                question: item.question,
+                options: item.options,
+                correctAnswer: item.correctAnswer,
+                explanation: item.explanation || "",
+                topic: item.topic || topics[0],
+                difficulty: item.difficulty || difficulty,
+              })
+            );
 
             if (collectedQuestions.length === questionCount) {
               break;
@@ -379,14 +440,16 @@ const generateFallbackQuizQuestions = (topics, language, neededCount, startIndex
   const fallbackList = [];
   for (let i = 0; i < neededCount; i++) {
     const item = questionTemplates[(startIndex + i) % questionTemplates.length];
-    fallbackList.push({
-      question: item.q,
-      options: item.opts,
-      correctAnswer: item.ans,
-      explanation: item.exp,
-      topic: primaryTopic,
-      difficulty: "medium",
-    });
+    fallbackList.push(
+      shuffleQuestionOptions({
+        question: item.q,
+        options: item.opts,
+        correctAnswer: item.ans,
+        explanation: item.exp,
+        topic: primaryTopic,
+        difficulty: "medium",
+      })
+    );
   }
   return fallbackList;
 };
@@ -484,7 +547,7 @@ const getTodayQuiz = async ({ studentId, language }) => {
     const targetTopics =
       weakProgress.length > 0
         ? weakProgress.map((p) => p.topic)
-        : ["basics", "logic", "syntax"];
+        : ["loops", "arrays", "basics"];
 
     // 4. Generate fresh, non-duplicating 10 questions
     const questions = await generateUniqueQuizQuestions({
@@ -586,6 +649,33 @@ const submitQuiz = async ({ quizId, studentId, answers }) => {
     }).catch((err) => {
       console.warn("Failed to update progress from quiz:", err.message);
     });
+  }
+
+  // If quiz performance shows conceptual gaps (score < 60), record AI intervention
+  if (score < 60) {
+    try {
+      const { recordIntervention } = require("../ai/aiIntervention.service");
+      const primaryTopic = topicsToUpdate[0] || quiz.topic || "general";
+      const progressBefore = await Progress.findOne({ 
+        studentId, 
+        topic: { $regex: new RegExp(`^${primaryTopic}$`, "i") } 
+      }).select("masteryScore");
+      const previousScore = progressBefore?.masteryScore ?? score;
+
+      await recordIntervention({
+        studentId,
+        type: "QUIZ_DEFICIT",
+        topic: primaryTopic,
+        language: quiz.language,
+        reason: `Quiz score was ${score}%, indicating conceptual gaps in ${primaryTopic}.`,
+        recommendation: `Review ${primaryTopic} core rules and take targeted practice quizzes.`,
+        previousScore,
+        source: "QUIZ",
+        referenceId: attempt._id,
+      });
+    } catch (err) {
+      console.warn("Failed to record quiz intervention:", err.message);
+    }
   }
 
   // Invalidate cached learning path so next view uses latest progress

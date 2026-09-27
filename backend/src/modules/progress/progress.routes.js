@@ -9,14 +9,14 @@ const router = express.Router();
 router.get(
   "/",
   authenticate,
-  authorize("STUDENT"),
+  authorize(["STUDENT", "ADMIN"]),
   progressController.getStudentProgress,
 );
 
 router.get(
   "/weak-topics",
   authenticate,
-  authorize("STUDENT"),
+  authorize(["STUDENT", "ADMIN"]),
   progressController.getWeakTopics,
 );
 

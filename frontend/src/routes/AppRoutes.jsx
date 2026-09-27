@@ -93,6 +93,8 @@ export const AppRoutes = () => {
         <Route path="/teacher/submissions/:id" element={<SubmissionReviewPage />} />
         <Route path="/teacher/students/:id" element={<StudentProgressView />} />
         <Route path="/teacher/analytics" element={<ClassAnalyticsPage />} />
+        <Route path="/teacher/topic-mastery" element={<ProgressDashboard />} />
+        <Route path="/teacher/classes/:id/topics" element={<ProgressDashboard />} />
         <Route path="/teacher/reports" element={<WeeklyReportPage />} />
       </Route>
 

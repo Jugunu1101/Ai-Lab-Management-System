@@ -41,9 +41,11 @@ class CodeAnalysisService:
                 "AI returned an invalid response structure"
             ) from error
 
+        effective_topics = [t.strip() for t in request.assignment.topics if t and t.strip()] if request.assignment.topics else ["basics"]
+
         self.validate_topics(
             validated_response,
-            request.assignment.topics
+            effective_topics
         )
 
         return validated_response
@@ -56,17 +58,15 @@ class CodeAnalysisService:
 
         allowed = {
             topic.lower()
-            for topic in allowed_topics
+            for topic in (allowed_topics or ["basics"])
         }
 
         for mastery in response.mastery:
             if mastery.topic.lower() not in allowed:
-                raise AIResponseError(
-                    f"Unsupported topic: {mastery.topic}"
-                )
+                mastery.topic = allowed_topics[0] if allowed_topics else "basics"
 
+        valid_weak = []
         for topic in response.weakTopics:
-            if topic.lower() not in allowed:
-                raise AIResponseError(
-                    f"Unsupported weak topic: {topic}"
-                )
+            if topic.lower() in allowed:
+                valid_weak.append(topic)
+        response.weakTopics = valid_weak

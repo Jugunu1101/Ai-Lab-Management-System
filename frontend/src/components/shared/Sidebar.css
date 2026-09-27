@@ -1,11 +1,11 @@
 /* ==========================================================================
    CODELAB AI — SIDEBAR STYLESHEET
-   Dark green (#123C2A), Forest green (#246B45), Cream (#F8F6EE), Yellow (#F4C542)
+   Dark green, Forest green, Cream, Yellow
    ========================================================================== */
 
 .cl-sidebar {
-  background: var(--cl-cream, #F8F6EE) !important;
-  border-right: 1px solid var(--cl-border, #DDE5DC) !important;
+  background: var(--bg-primary) !important;
+  border-right: 1px solid var(--border-color) !important;
   transition: all 0.25s ease !important;
   display: flex !important;
   flex-direction: column !important;
@@ -34,8 +34,8 @@
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: var(--cl-green-primary, #123C2A);
-  color: var(--cl-yellow, #F4C542);
+  background: var(--primary);
+  color: var(--cl-yellow);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,7 +52,7 @@
   font-family: var(--font-heading, 'Outfit', sans-serif);
   font-size: 19px;
   font-weight: 800;
-  color: var(--cl-text, #18231D);
+  color: var(--text-primary);
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -60,7 +60,7 @@
 .cl-sidebar-logo-subtitle {
   font-size: 11px;
   font-weight: 600;
-  color: var(--cl-text-secondary, #5F6B63);
+  color: var(--text-secondary);
   letter-spacing: 0.01em;
 }
 
@@ -81,7 +81,7 @@
   width: 100% !important;
   font-size: 15px !important;
   font-weight: 600 !important;
-  color: var(--cl-text-secondary, #5F6B63) !important;
+  color: var(--text-secondary) !important;
   padding: 0 16px !important;
   display: flex !important;
   align-items: center !important;
@@ -94,28 +94,28 @@
 }
 
 .cl-sidebar .ant-menu-item:hover {
-  background: var(--cl-green-light, #EDF6EA) !important;
-  color: var(--cl-green-primary, #123C2A) !important;
+  background: var(--surface-hover) !important;
+  color: var(--text-primary) !important;
 }
 
-/* Active navigation item: Dark Green, White Text */
+/* Active navigation item */
 .cl-sidebar .ant-menu-item-selected {
-  background: var(--cl-green-primary, #123C2A) !important;
+  background: var(--primary) !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
-  box-shadow: 0 4px 14px rgba(18, 60, 42, 0.22) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
 .cl-sidebar .ant-menu-item-selected .ant-menu-item-icon {
-  color: var(--cl-yellow, #F4C542) !important;
+  color: var(--cl-yellow) !important;
 }
 
 /* Sidebar Bottom Profile Card */
 .cl-sidebar-bottom-profile {
   margin-top: auto;
   padding: 12px 14px;
-  background: #FFFFFF;
-  border: 1px solid var(--cl-border, #DDE5DC);
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -125,8 +125,8 @@
 }
 
 .cl-sidebar-bottom-profile:hover {
-  border-color: var(--cl-green-forest, #246B45);
-  box-shadow: 0 4px 12px rgba(18, 60, 42, 0.08);
+  border-color: var(--cl-green-forest);
+  box-shadow: var(--shadow-sm);
 }
 
 .cl-sb-profile-left {
@@ -140,7 +140,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--cl-green-primary, #123C2A);
+  background: var(--primary);
   color: #FFFFFF;
   font-weight: 700;
   font-size: 13px;
@@ -159,7 +159,7 @@
 .cl-sb-name {
   font-size: 13px;
   font-weight: 700;
-  color: var(--cl-text, #18231D);
+  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -167,6 +167,6 @@
 
 .cl-sb-role {
   font-size: 11px;
-  color: var(--cl-text-secondary, #5F6B63);
+  color: var(--text-secondary);
   font-weight: 500;
 }

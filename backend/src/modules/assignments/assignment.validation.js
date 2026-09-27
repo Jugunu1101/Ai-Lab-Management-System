@@ -73,6 +73,16 @@ const createAssignmentSchema = Joi.object({
   classId: Joi.string()
     .trim()
     .required(),
+
+  assignedTo: Joi.string()
+    .trim()
+    .allow(null)
+    .optional(),
+
+  agentReason: Joi.string()
+    .trim()
+    .allow("")
+    .optional(),
 });
 
 const updateAssignmentSchema = Joi.object({
@@ -112,6 +122,9 @@ const generateAIAssignmentSchema = Joi.object({
   difficulty: Joi.string().valid("EASY", "MEDIUM", "HARD", "easy", "medium", "hard").required(),
   questionCount: Joi.number().integer().min(1).max(5).default(1),
   classId: Joi.string().trim().optional(),
+  excludedTitles: Joi.array().items(Joi.string().trim()).optional(),
+  excludedAssignments: Joi.array().items(Joi.string().trim()).optional(),
+  currentTitle: Joi.string().trim().allow("").optional(),
 });
 
 module.exports = {

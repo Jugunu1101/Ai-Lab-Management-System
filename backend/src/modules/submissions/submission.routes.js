@@ -62,7 +62,7 @@ router.get(
 router.get(
   "/:submissionId",
   authenticate,
-  authorize("STUDENT"),
+  authorize("STUDENT", "TEACHER", "ADMIN"),
   submissionController.getSubmissionById
 );
 

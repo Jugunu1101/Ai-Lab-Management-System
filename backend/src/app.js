@@ -74,15 +74,45 @@ app.use("/api/auth", authLimiter);
 app.use(express.json({ limit: "2mb" }));
 app.use(express.urlencoded({ extended: true, limit: "2mb" }));
 
-// Health Check
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
+// Health Check & Infrastructure Status
+const { exec } = require("child_process");
+const { isDBConnected } = require("./config/db");
+
+let isDockerAvailable = false;
+const checkDocker = () => {
+  exec("docker --version", { timeout: 2000 }, (err) => {
+    isDockerAvailable = !err;
+  });
+};
+checkDocker();
+if (process.env.NODE_ENV !== "test") {
+  setInterval(checkDocker, 60000);
+}
+
+const handleHealthCheck = (req, res) => {
+  const dbConnected = isDBConnected();
+  const statusCode = dbConnected ? 200 : 503;
+
+  return res.status(statusCode).json({
+    status: dbConnected ? "ok" : "degraded",
     service: "programming-lab-backend",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
+    checks: {
+      backend: "running",
+      database: dbConnected ? "connected" : "disconnected",
+      aiMode: process.env.AI_MOCK_MODE === "false" ? "live" : "mock",
+      codeExecution: {
+        available: isDockerAvailable,
+        engine: "docker",
+      },
+    },
   });
-});
+};
+
+app.get("/health", handleHealthCheck);
+app.get("/api/health", handleHealthCheck);
+
 
 // API Routes
 app.use("/api/auth", authRoutes);
@@ -97,6 +127,17 @@ app.use("/api/quiz", quizRoutes); // alias for singular /api/quiz endpoints
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/reports", reportsRoutes);
 app.use("/api/colleges", collegeRoutes);
+app.use("/api/ai", require("./modules/ai/ai.routes"));
+
+// Teacher Dashboard endpoint alias
+const analyticsController = require("./modules/analytics/analytics.controller");
+const { authenticate, authorize } = require("./middleware/auth.middleware");
+app.get(
+  "/api/teacher/dashboard",
+  authenticate,
+  authorize("TEACHER", "ADMIN"),
+  analyticsController.getTeacherDashboard
+);
 
 // 404 Route Handler
 app.use((req, res) => {

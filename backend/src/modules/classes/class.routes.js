@@ -43,23 +43,30 @@ router.post(
 router.get(
   "/",
   authenticate,
-  authorize("STUDENT", "TEACHER"),
+  authorize("STUDENT", "TEACHER", "ADMIN"),
   classController.getClasses
 );
 
 router.get(
   "/:classId",
   authenticate,
-  authorize("STUDENT", "TEACHER"),
+  authorize("STUDENT", "TEACHER", "ADMIN"),
   classController.getClassById
 );
 
 router.put(
   "/:classId",
   authenticate,
-  authorize("TEACHER"),
+  authorize("TEACHER", "ADMIN"),
   validate(updateClassSchema),
   classController.updateClass
+);
+
+router.delete(
+  "/:classId",
+  authenticate,
+  authorize("TEACHER", "ADMIN"),
+  classController.deleteClass
 );
 
 module.exports = router;

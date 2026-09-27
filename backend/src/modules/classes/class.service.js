@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Class = require("./class.model");
 const User = require("../users/user.model");
 const { invalidateStudentDashboardCache } = require("../student/student.service");
@@ -84,7 +85,11 @@ const addStudentToClass = async ({
     throw error;
   }
 
-  if (classData.teacherId.toString() !== teacherId) {
+  const ownerId = classData.teacherId
+    ? (classData.teacherId._id || classData.teacherId).toString()
+    : null;
+
+  if (!ownerId || ownerId !== (teacherId ? teacherId.toString() : "")) {
     const error = new Error("You do not have access to this class");
     error.statusCode = 403;
     error.code = "FORBIDDEN";
@@ -138,23 +143,56 @@ const addStudentToClass = async ({
   return classData;
 };
 
-const getClasses = async ({ userId, role }) => {
+const getClasses = async ({ userId, role, search }) => {
   const Assignment = require("../assignments/assignment.model");
   
   let classes;
 
   if (role === "TEACHER") {
+    const teacherObjectId = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
     classes = await Class.find({
-      teacherId: userId,
-    }).populate("teacherId", "name email").lean();
+      $or: [{ teacherId: userId }, { teacherId: teacherObjectId }],
+    })
+      .populate("teacherId", "name email")
+      .lean();
 
   } else if (role === "STUDENT") {
+    const studentObjectId = mongoose.Types.ObjectId.isValid(userId)
+      ? new mongoose.Types.ObjectId(userId)
+      : userId;
+
     classes = await Class.find({
-      students: userId,
-    }).populate("teacherId", "name email").lean();
+      $or: [
+        { students: userId },
+        { students: studentObjectId },
+        { students: { $in: [userId, studentObjectId] } },
+      ],
+    })
+      .populate("teacherId", "name email")
+      .lean();
+
+  } else if (role === "ADMIN") {
+    classes = await Class.find()
+      .populate("teacherId", "name email")
+      .lean();
 
   } else {
     classes = [];
+  }
+
+  if (search && search.trim()) {
+    const term = search.trim().toLowerCase();
+    classes = classes.filter(
+      (c) =>
+        c.name?.toLowerCase().includes(term) ||
+        c.code?.toLowerCase().includes(term) ||
+        c.department?.toLowerCase().includes(term) ||
+        c.teacherId?.name?.toLowerCase().includes(term) ||
+        c.description?.toLowerCase().includes(term)
+    );
   }
 
   // Attach assignmentsCount to each class
@@ -187,14 +225,16 @@ const getClassById = async ({ classId, userId, role }) => {
   if (!classData) {
     const error = new Error("Class not found");
     error.statusCode = 404;
-    error.code = "CLASS_NOT_FOUND"
+    error.code = "CLASS_NOT_FOUND";
     throw error;
   }
 
   if (role === "TEACHER") {
-    const teacherId = classData.teacherId._id.toString();
+    const ownerId = classData.teacherId
+      ? (classData.teacherId._id || classData.teacherId).toString()
+      : null;
 
-    if (teacherId !== userId) {
+    if (!ownerId || ownerId !== (userId ? userId.toString() : "")) {
       const error = new Error("You do not have access to this class");
       error.statusCode = 403;
       error.code = "FORBIDDEN";
@@ -203,8 +243,9 @@ const getClassById = async ({ classId, userId, role }) => {
   }
 
   if (role === "STUDENT") {
+    const targetUserIdStr = userId ? userId.toString() : "";
     const isEnrolled = classData.students.some(
-      (student) => student._id.toString() === userId
+      (student) => (student._id || student).toString() === targetUserIdStr
     );
 
     if (!isEnrolled) {
@@ -268,7 +309,11 @@ const updateClass = async ({
     throw error;
   }
 
-  if (classData.teacherId.toString() !== teacherId) {
+  const ownerId = classData.teacherId
+    ? (classData.teacherId._id || classData.teacherId).toString()
+    : null;
+
+  if (!ownerId || ownerId !== (teacherId ? teacherId.toString() : "")) {
     const error = new Error("You do not have permission to update this class");
     error.statusCode = 403;
     error.code = "FORBIDDEN";
@@ -290,6 +335,83 @@ const updateClass = async ({
   await classData.save();
 
   return classData;
+};
+
+const deleteClass = async ({ classId, userId, role }) => {
+  const Assignment = require("../assignments/assignment.model");
+  const Submission = require("../submissions/submission.model");
+  const WeeklyReport = require("../reports/weeklyReport.model");
+  const AIAnalysis = require("../../services/ai/aiAnalysis.model");
+  const AIIntervention = require("../ai/aiIntervention.model");
+
+  const classData = await Class.findById(classId);
+
+  if (!classData) {
+    const error = new Error("Class not found");
+    error.statusCode = 404;
+    error.code = "CLASS_NOT_FOUND";
+    throw error;
+  }
+
+  const ownerId = classData.teacherId
+    ? (classData.teacherId._id || classData.teacherId).toString()
+    : null;
+  const currentUserId = (userId || "").toString();
+
+  // Authorization: Only owner or ADMIN can delete
+  if (role !== "ADMIN" && (!ownerId || ownerId !== currentUserId)) {
+    const error = new Error("You do not have permission to delete this class");
+    error.statusCode = 403;
+    error.code = "FORBIDDEN";
+    throw error;
+  }
+
+  // 1. Find all assignments belonging to this class
+  const assignments = await Assignment.find({ classId: classData._id }).select("_id").lean();
+  const assignmentIds = assignments.map((a) => a._id);
+
+  // 2. Cascade delete submissions for assignments belonging to this class
+  if (assignmentIds.length > 0) {
+    await Submission.deleteMany({ assignment: { $in: assignmentIds } });
+  }
+
+  // 3. Delete assignments for this class
+  await Assignment.deleteMany({ classId: classData._id });
+
+  // 4. Delete weekly reports for this class
+  await WeeklyReport.deleteMany({
+    $or: [{ classId: classData._id }, { classId: classData._id.toString() }],
+  });
+
+  // 5. Delete AI analysis records for this class
+  await AIAnalysis.deleteMany({
+    $or: [{ classId: classData._id }, { classId: classData._id.toString() }],
+  });
+
+  // 6. Delete AI intervention records specifically tied to this class
+  await AIIntervention.deleteMany({
+    $or: [{ classId: classData._id }, { classId: classData._id.toString() }],
+  });
+
+  // 7. Invalidate student dashboard caches for enrolled students (preserve independent students)
+  if (classData.students && classData.students.length > 0) {
+    for (const studentId of classData.students) {
+      try {
+        await invalidateStudentDashboardCache(studentId.toString());
+      } catch (err) {
+        // Continue cleanup
+      }
+    }
+  }
+
+  // 8. Delete the class itself
+  await Class.findByIdAndDelete(classData._id);
+
+  return {
+    deletedClassId: classData._id.toString(),
+    deletedClassName: classData.name,
+    assignmentsDeleted: assignmentIds.length,
+  };
 };
 
 const joinClassByCode = async ({ code, studentId }) => {
@@ -335,6 +457,7 @@ const joinClassByCode = async ({ code, studentId }) => {
 
 module.exports = {
   createClass,
+  deleteClass,
   addStudentToClass,
   getClasses,
   getClassById,

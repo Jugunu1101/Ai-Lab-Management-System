@@ -15,6 +15,7 @@ A full-stack college programming-lab management system that uses AI to analyze s
   - [2. Option A — Docker Compose (Recommended)](#2-option-a--docker-compose-recommended)
   - [2. Option B — Manual (Local Development)](#2-option-b--manual-local-development)
   - [3. Seed the Database](#3-seed-the-database)
+  - [4. Offline & Local Development Guide (No Internet)](#offline--local-development-guide-no-internet)
 - [Default Credentials](#default-credentials)
 - [Features & How to Use Them](#features--how-to-use-them)
   - [Authentication & Authorization](#1-authentication--authorization)
@@ -507,8 +508,21 @@ This creates:
 - 1 Student user
 - 1 Sample class ("CS101: Data Structures & Algorithms")
 - 1 Sample assignment ("Find Double of Number") with test cases
+- 1 Sample assignment ("Nested Number Triangle Pattern" in C++)
+- 1 Sample assignment ("Reverse a String" in Python)
+
+### 4. Offline & Local Development Guide (No Internet)
+
+For full step-by-step documentation on running without internet, see **[OFFLINE_DEVELOPMENT.md](OFFLINE_DEVELOPMENT.md)**.
+
+- **Local MongoDB**: `MONGODB_URI=mongodb://localhost:27017/ai-lab` (in `.env` and `backend/.env`)
+- **Remote MongoDB Atlas**: Uncomment `MONGODB_URI=mongodb+srv://...` in `.env` and `backend/.env`
+- **Mock AI Mode**: Set `AI_MOCK_MODE=true` in `.env` and `ai-service/.env` (no OpenAI API key needed)
+- **Local Code Execution**: Uses Docker engines (`gcc:latest`, `node:22-alpine`, `python:3.11-alpine`)
+- **Error Handling**: Database and network errors return clean user-friendly messages rather than raw hostnames or stack traces.
 
 ---
+
 
 ## Default Credentials
 

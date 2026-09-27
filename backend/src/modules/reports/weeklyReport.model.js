@@ -6,6 +6,10 @@ const studentNeedingAttentionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    studentName: {
+      type: String,
+      default: "",
+    },
     name: {
       type: String,
       default: "",
@@ -13,6 +17,28 @@ const studentNeedingAttentionSchema = new mongoose.Schema(
     reason: {
       type: String,
       default: "",
+    },
+    reasons: {
+      type: [String],
+      default: [],
+    },
+    score: {
+      type: Number,
+      default: null,
+    },
+  },
+  { _id: false }
+);
+
+const conceptScoreSchema = new mongoose.Schema(
+  {
+    topic: {
+      type: String,
+      required: true,
+    },
+    score: {
+      type: Number,
+      required: true,
     },
   },
   { _id: false }
@@ -25,6 +51,10 @@ const weeklyReportSchema = new mongoose.Schema(
       ref: "Class",
       required: true,
       index: true,
+    },
+    className: {
+      type: String,
+      default: "",
     },
     weekStart: {
       type: Date,
@@ -46,13 +76,36 @@ const weeklyReportSchema = new mongoose.Schema(
       type: [String],
       default: [],
     },
+    strongConcepts: {
+      type: [conceptScoreSchema],
+      default: [],
+    },
+    vulnerableConcepts: {
+      type: [conceptScoreSchema],
+      default: [],
+    },
     studentsNeedingAttention: {
       type: [studentNeedingAttentionSchema],
       default: [],
     },
+    studentsNeedingIntervention: {
+      type: [studentNeedingAttentionSchema],
+      default: [],
+    },
+    statistics: {
+      totalStudents: { type: Number, default: 0 },
+      activeStudents: { type: Number, default: 0 },
+      totalSubmissions: { type: Number, default: 0 },
+      averageScore: { type: Number, default: 0 },
+      medianScore: { type: Number, default: 0 },
+    },
     recommendations: {
       type: [String],
       default: [],
+    },
+    diagnostics: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
     },
     model: {
       type: String,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Table, Tag, Card, Typography, Space } from "antd";
-import { TeamOutlined } from "@ant-design/icons";
+import { Table, Tag, Card, Typography, Space, Input } from "antd";
+import { TeamOutlined, SearchOutlined } from "@ant-design/icons";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorState from "../../components/shared/ErrorState";
 import adminService from "../../services/admin.service";
@@ -13,6 +13,7 @@ export const ClassManagementPage = () => {
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchClasses = async () => {
     setLoading(true);
@@ -35,6 +36,19 @@ export const ClassManagementPage = () => {
   useEffect(() => {
     fetchClasses();
   }, []);
+
+  const cleanTerm = (searchTerm || "").trim().toLowerCase();
+  const filteredClasses = classes.filter((c) => {
+    if (!cleanTerm) return true;
+    const nameMatch = c.name?.toLowerCase().includes(cleanTerm);
+    const codeMatch = c.code?.toLowerCase().includes(cleanTerm);
+    const teacherMatch =
+      c.teacherName?.toLowerCase().includes(cleanTerm) ||
+      c.teacherId?.name?.toLowerCase().includes(cleanTerm);
+    const deptMatch = c.department?.toLowerCase().includes(cleanTerm);
+    const descMatch = c.description?.toLowerCase().includes(cleanTerm);
+    return nameMatch || codeMatch || teacherMatch || deptMatch || descMatch;
+  });
 
   const columns = [
     {
@@ -88,6 +102,17 @@ export const ClassManagementPage = () => {
         </Text>
       </div>
 
+      <div style={{ marginBottom: 20, maxWidth: 420 }}>
+        <Input
+          prefix={<SearchOutlined style={{ color: "var(--text-muted)" }} />}
+          placeholder="Search classrooms by title, code, instructor, department..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          allowClear
+          style={{ borderRadius: 8, height: 42 }}
+        />
+      </div>
+
       <Card className="glass-card" bordered={false} bodyStyle={{ padding: 0 }}>
         {loading ? (
           <LoadingSpinner tip="Loading classroom directory..." />
@@ -97,7 +122,7 @@ export const ClassManagementPage = () => {
           </div>
         ) : (
           <Table
-            dataSource={classes}
+            dataSource={filteredClasses}
             columns={columns}
             rowKey="_id"
             pagination={{ pageSize: 10 }}

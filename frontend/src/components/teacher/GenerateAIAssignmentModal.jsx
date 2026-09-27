@@ -39,6 +39,7 @@ export const GenerateAIAssignmentModal = ({ open, onClose, onSuccess }) => {
   const [classes, setClasses] = useState([]);
   const [generatedResult, setGeneratedResult] = useState(null);
   const [selectedClassId, setSelectedClassId] = useState(null);
+  const [seenTitles, setSeenTitles] = useState([]);
   const [step, setStep] = useState("form"); // "form" | "preview"
 
   useEffect(() => {
@@ -56,25 +57,40 @@ export const GenerateAIAssignmentModal = ({ open, onClose, onSuccess }) => {
       
       setStep("form");
       setGeneratedResult(null);
+      setSeenTitles([]);
     }
   }, [open]);
 
-  const handleGenerate = async (values) => {
+  const handleGenerate = async (values, isRegenerate = false) => {
     setGenerating(true);
     try {
-      setSelectedClassId(values.classId);
+      const targetClassId = values.classId || selectedClassId;
+      setSelectedClassId(targetClassId);
+
+      const exclusionsToPass = Array.from(
+        new Set([
+          ...seenTitles,
+          ...(generatedResult?.title ? [generatedResult.title] : []),
+        ])
+      );
+
       const res = await assignmentService.generateAIAssignment({
         topic: values.topic,
         language: values.language,
         difficulty: values.difficulty,
         questionCount: values.questionCount || 1,
-        classId: values.classId,
+        classId: targetClassId,
+        excludedTitles: exclusionsToPass,
+        currentTitle: generatedResult?.title,
       });
 
       const data = res.data || res;
       setGeneratedResult(data);
+      if (data.title) {
+        setSeenTitles((prev) => Array.from(new Set([...prev, data.title])));
+      }
       setStep("preview");
-      message.success("AI Assignment generated successfully!");
+      message.success(isRegenerate ? "New distinct problem generated successfully!" : "AI Assignment generated successfully!");
     } catch (err) {
       const msg = err.response?.data?.error?.message || err.message || "Failed to generate AI assignment";
       message.error(msg);
@@ -432,7 +448,7 @@ export const GenerateAIAssignmentModal = ({ open, onClose, onSuccess }) => {
             <Space>
               <Button
                 icon={<RedoOutlined />}
-                onClick={() => handleGenerate(form.getFieldsValue())}
+                onClick={() => handleGenerate({ ...form.getFieldsValue(), classId: selectedClassId }, true)}
                 loading={generating}
               >
                 Regenerate

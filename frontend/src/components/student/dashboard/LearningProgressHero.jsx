@@ -33,13 +33,13 @@ export const LearningProgressHero = ({
       <div className="cl-progress-hero-body">
         {/* Large Circular Gauge */}
         <div className="cl-gauge-wrapper">
-          <svg width="170" height="170" className="cl-gauge-svg">
+          <svg width="170" height="170" className="cl-gauge-svg" viewBox="0 0 170 170">
             <circle
               cx="85"
               cy="85"
               r={radius}
               className="cl-gauge-bg"
-              strokeWidth="14"
+              strokeWidth="12"
               fill="transparent"
             />
             <circle
@@ -47,15 +47,21 @@ export const LearningProgressHero = ({
               cy="85"
               r={radius}
               className="cl-gauge-fill"
-              strokeWidth="14"
+              strokeWidth="12"
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
+              style={{ opacity: validPercent === 0 ? 0 : 1 }}
             />
           </svg>
-          <div className="cl-gauge-inner-content">
-            <span className="cl-gauge-percent">{validPercent}%</span>
-            <span className="cl-gauge-label">Overall Mastery</span>
+          <div className="cl-gauge-inner-content" aria-label={`Overall Mastery: ${validPercent}%`}>
+            <span className={`cl-gauge-percent ${validPercent === 100 ? "cl-gauge-percent-100" : ""}`}>
+              {validPercent}%
+            </span>
+            <div className="cl-gauge-label">
+              <span className="cl-gauge-label-line">OVERALL</span>
+              <span className="cl-gauge-label-line">MASTERY</span>
+            </div>
           </div>
         </div>
 

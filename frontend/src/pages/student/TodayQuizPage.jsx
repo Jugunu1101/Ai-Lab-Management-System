@@ -93,7 +93,10 @@ export const TodayQuizPage = () => {
           if (Array.isArray(attempt.answers)) {
             attempt.answers.forEach((ans) => {
               const letters = ["A", "B", "C", "D"];
-              const idx = letters.indexOf(ans.selectedAnswer);
+              let idx = letters.indexOf(ans.selectedAnswer);
+              if (idx === -1 && /^[0-3]$/.test(String(ans.selectedAnswer))) {
+                idx = parseInt(ans.selectedAnswer, 10);
+              }
               if (idx !== -1) {
                 attemptAnswers[ans.questionIndex] = idx;
               }
@@ -108,6 +111,7 @@ export const TodayQuizPage = () => {
                 : 0,
             totalQuestions: quizData.questions.length,
             masteryPointsGained: Math.round(attempt.score * 0.25),
+            answers: attempt.answers,
           });
         }
       } else {
@@ -168,6 +172,85 @@ export const TodayQuizPage = () => {
     }
   };
 
+  const getCorrectOptionIndex = (q) => {
+    if (!q || q.correctAnswer === undefined || q.correctAnswer === null) return -1;
+    const raw = String(q.correctAnswer).trim();
+
+    // 1. Numeric index
+    if (/^[0-9]+$/.test(raw)) {
+      const num = parseInt(raw, 10);
+      if (Array.isArray(q.options) && num >= 0 && num < q.options.length) {
+        return num;
+      }
+    }
+
+    // 2. Letter prefix (A, B, C, D)
+    const letterMatch = raw.match(/^([A-D])[\s.):\-\]]*/i);
+    if (letterMatch) {
+      const letterIdx = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
+      if (Array.isArray(q.options) && letterIdx >= 0 && letterIdx < q.options.length) {
+        return letterIdx;
+      }
+    }
+
+    // 3. Option text match
+    if (Array.isArray(q.options)) {
+      const rawLower = raw.toLowerCase();
+      const matchIdx = q.options.findIndex((opt) => {
+        if (!opt) return false;
+        const optStr = String(opt).trim().toLowerCase();
+        const strippedOpt = optStr.replace(/^([a-d])[\s.):\-\]]+\s*/i, "").trim();
+        const strippedRaw = rawLower.replace(/^([a-d])[\s.):\-\]]+\s*/i, "").trim();
+        return optStr === rawLower || strippedOpt === strippedRaw || strippedOpt === rawLower;
+      });
+      if (matchIdx !== -1) return matchIdx;
+    }
+
+    return -1;
+  };
+
+  const getCorrectOptionText = (q) => {
+    if (!q) return "";
+    const idx = getCorrectOptionIndex(q);
+    if (idx >= 0 && Array.isArray(q.options) && q.options[idx]) {
+      return q.options[idx];
+    }
+    const letterMatch = String(q.correctAnswer || "").trim().match(/^([A-D])/i);
+    if (letterMatch && Array.isArray(q.options)) {
+      const lIdx = letterMatch[1].toUpperCase().charCodeAt(0) - 65;
+      if (q.options[lIdx]) return q.options[lIdx];
+    }
+    return q.correctAnswer || "";
+  };
+
+  const isQuestionCorrect = (q, idx) => {
+    if (submissionResult?.answers && Array.isArray(submissionResult.answers)) {
+      const evalAns =
+        submissionResult.answers.find((a) => a.questionIndex === idx) ||
+        submissionResult.answers[idx];
+      if (evalAns && typeof evalAns.isCorrect === "boolean") {
+        return evalAns.isCorrect;
+      }
+    }
+
+    const userAnsIdx = answers[idx];
+    if (userAnsIdx === undefined || userAnsIdx === null) return false;
+
+    const correctIdx = getCorrectOptionIndex(q);
+    if (correctIdx !== -1) {
+      return userAnsIdx === correctIdx;
+    }
+
+    const chosenText = q.options?.[userAnsIdx];
+    if (chosenText && q.correctAnswer) {
+      const cleanUser = String(chosenText).trim().toLowerCase();
+      const cleanCorr = String(q.correctAnswer).trim().toLowerCase();
+      return cleanUser === cleanCorr || cleanUser.includes(cleanCorr) || cleanCorr.includes(cleanUser);
+    }
+
+    return false;
+  };
+
   const handleSubmitQuiz = async () => {
     setSubmitting(true);
     try {
@@ -184,12 +267,30 @@ export const TodayQuizPage = () => {
       try {
         const res = await quizService.submitQuiz(quiz._id, formattedAnswers);
         resultData = res.data?.result || res.result || res.data;
-      } catch {
+        if (resultData) {
+          resultData.correctCount =
+            resultData.correctCount ??
+            resultData.correctAnswers ??
+            (resultData.score != null
+              ? Math.round((resultData.score / 100) * quiz.questions.length)
+              : 0);
+          resultData.totalQuestions = resultData.totalQuestions ?? quiz.questions.length;
+          resultData.masteryPointsGained =
+            resultData.masteryPointsGained ??
+            Math.round((resultData.score || 0) * 0.25);
+          if (resultData.questions) {
+            setQuiz((prev) => ({ ...prev, questions: resultData.questions }));
+          }
+        }
+      } catch (submitErr) {
+        console.warn("Quiz submit API error, falling back locally:", submitErr);
         // Calculate locally fallback
         let correctCount = 0;
         const total = quiz.questions.length;
         quiz.questions.forEach((q, idx) => {
-          if (answers[idx] === q.correctAnswer) {
+          const userAnsIdx = answers[idx];
+          const correctIdx = getCorrectOptionIndex(q);
+          if (userAnsIdx !== undefined && userAnsIdx === correctIdx) {
             correctCount++;
           }
         });
@@ -215,19 +316,19 @@ export const TodayQuizPage = () => {
     if (!optionText || typeof optionText !== "string") {
       return { letter: defaultLetter, text: String(optionText || "") };
     }
-    const match = optionText.match(/^([A-D])[\s.):\-\]]+\s*(.*)$/i);
-    if (match) {
-      return { letter: match[1].toUpperCase(), text: match[2] };
-    }
-    return { letter: defaultLetter, text: optionText };
+    // Clean any leading letter prefix so that letter badge strictly matches array index
+    const cleanText = optionText.replace(/^([A-D])[\s.):\-\]]+\s*/i, "").trim();
+    return { letter: defaultLetter, text: cleanText || optionText };
   };
 
   const renderQuestionContent = (text) => {
     if (!text) return null;
-    if (text.includes("\n")) {
-      const parts = text.split("\n");
+    // Strip markdown code fences if present
+    const clean = text.replace(/```[a-zA-Z0-9_+#]*\n/g, "").replace(/```/g, "").trim();
+    if (clean.includes("\n")) {
+      const parts = clean.split("\n");
       const intro = parts[0];
-      const code = parts.slice(1).join("\n");
+      const code = parts.slice(1).join("\n").trim();
       return (
         <div>
           <div className="quiz-question-text">{intro}</div>
@@ -239,7 +340,7 @@ export const TodayQuizPage = () => {
         </div>
       );
     }
-    return <div className="quiz-question-text">{text}</div>;
+    return <div className="quiz-question-text">{clean}</div>;
   };
 
   if (loading) {
@@ -250,7 +351,7 @@ export const TodayQuizPage = () => {
     return <ErrorState message={error} onRetry={fetchQuiz} />;
   }
 
-  const questions = quiz?.questions || [];
+  const questions = submissionResult?.questions || quiz?.questions || [];
   const currentQ = questions[currentQuestionIndex];
   const progressPercent = questions.length > 0 ? Math.round(((currentQuestionIndex + 1) / questions.length) * 100) : 0;
   const isAllAnswered = questions.length > 0 && Object.keys(answers).length === questions.length;
@@ -315,7 +416,7 @@ export const TodayQuizPage = () => {
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {questions.map((q, idx) => {
               const userAnswer = answers[idx];
-              const isCorrect = userAnswer === q.correctAnswer;
+              const isCorrect = isQuestionCorrect(q, idx);
               return (
                 <div
                   key={idx}
@@ -340,12 +441,15 @@ export const TodayQuizPage = () => {
                   <div style={{ fontSize: 15, color: "#59665E", marginBottom: 6, paddingLeft: 32 }}>
                     <strong style={{ color: "#18231D" }}>Your choice:</strong>{" "}
                     <span style={{ color: isCorrect ? "#2F7D4A" : "#C83C3C", fontWeight: 600 }}>
-                      {q.options[userAnswer] || "Not answered"}
+                      {userAnswer !== undefined && q.options?.[userAnswer]
+                        ? q.options[userAnswer]
+                        : "Not answered"}
                     </span>
                   </div>
                   {!isCorrect && (
                     <div style={{ fontSize: 15, color: "#2F7D4A", marginBottom: 6, paddingLeft: 32 }}>
-                      <strong style={{ color: "#18231D" }}>Correct choice:</strong> {q.options[q.correctAnswer]}
+                      <strong style={{ color: "#18231D" }}>Correct choice:</strong>{" "}
+                      <span style={{ fontWeight: 600 }}>{getCorrectOptionText(q)}</span>
                     </div>
                   )}
                   {q.explanation && (

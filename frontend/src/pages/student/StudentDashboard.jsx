@@ -95,13 +95,18 @@ export const StudentDashboard = () => {
     learningPath?.aiRecommendedAssignment ||
     recentAssignments.find(
       (a) =>
-        a.source === "AI_AGENT" &&
+        (a.source === "AI_AGENT" || a.source === "AI_GENERATED") &&
         a.status !== "COMPLETED" &&
         a.status !== "PASSED"
     );
 
   // 2. Real metrics for hero section
-  const overallMastery = dashData?.averageScore ?? 0;
+  const overallMastery =
+    dashData?.overallMastery ??
+    dashData?.averageScore ??
+    (topicMastery.length > 0
+      ? Math.round(topicMastery.reduce((acc, t) => acc + (t.masteryScore || 0), 0) / topicMastery.length)
+      : 0);
   
   // Calculate completed quizzes count from real submissions or quiz status
   const completedQuizzesCount =
@@ -138,13 +143,20 @@ export const StudentDashboard = () => {
     "C++";
 
   // Filter assignments based on search term if user types
-  const filteredAssignments = searchFilter.trim()
-    ? recentAssignments.filter((a) =>
-        a.title?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        a.topic?.toLowerCase().includes(searchFilter.toLowerCase()) ||
-        (Array.isArray(a.topics) &&
-          a.topics.some((t) => t.toLowerCase().includes(searchFilter.toLowerCase())))
-      )
+  const cleanFilter = searchFilter.trim().toLowerCase();
+  const filteredAssignments = cleanFilter
+    ? recentAssignments.filter((a) => {
+        const titleMatch = a.title?.toLowerCase().includes(cleanFilter);
+        const topicMatch = a.topic?.toLowerCase().includes(cleanFilter);
+        const descMatch = a.description?.toLowerCase().includes(cleanFilter);
+        const topicsMatch =
+          Array.isArray(a.topics) &&
+          a.topics.some((t) => t?.toLowerCase().includes(cleanFilter));
+        const langMatch =
+          a.language?.toLowerCase().includes(cleanFilter) ||
+          a.programmingLanguage?.toLowerCase().includes(cleanFilter);
+        return titleMatch || topicMatch || descMatch || topicsMatch || langMatch;
+      })
     : recentAssignments;
 
   return (

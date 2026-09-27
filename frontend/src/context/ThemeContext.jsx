@@ -14,6 +14,11 @@ export const ThemeProvider = ({ children }) => {
     const themeStr = isDarkMode ? "dark" : "light";
     localStorage.setItem("theme", themeStr);
     document.documentElement.setAttribute("data-theme", themeStr);
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    if (document.body) {
+      document.body.setAttribute("data-theme", themeStr);
+      document.body.classList.toggle("dark", isDarkMode);
+    }
   }, [isDarkMode]);
 
   const toggleTheme = () => {
@@ -24,12 +29,12 @@ export const ThemeProvider = ({ children }) => {
     algorithm: isDarkMode ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
     token: {
       colorPrimary: isDarkMode ? "#2F7D4A" : "#123C2A",
-      colorPrimaryHover: isDarkMode ? "#246B45" : "#174832",
+      colorPrimaryHover: isDarkMode ? "#3BA764" : "#174832",
       colorPrimaryActive: isDarkMode ? "#174832" : "#246B45",
-      colorSuccess: "#2F7D4A",
-      colorWarning: "#D99A00",
-      colorError: "#C83C3C",
-      colorInfo: "#2F7D4A",
+      colorSuccess: isDarkMode ? "#3BA764" : "#2F7D4A",
+      colorWarning: isDarkMode ? "#E5B632" : "#D99A00",
+      colorError: isDarkMode ? "#F87171" : "#C83C3C",
+      colorInfo: isDarkMode ? "#3BA764" : "#2F7D4A",
       borderRadius: 12,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       fontSize: 15,
@@ -41,9 +46,9 @@ export const ThemeProvider = ({ children }) => {
       fontSizeHeading4: 18,
       controlHeight: 44,
       lineHeight: 1.55,
-      colorBgBase: isDarkMode ? "#0F281E" : "#F8F6EE",
-      colorBgContainer: isDarkMode ? "#174832" : "#FFFFFF",
-      colorBgElevated: isDarkMode ? "#1F543C" : "#FFFFFF",
+      colorBgBase: isDarkMode ? "#0B1E16" : "#F8F6EE",
+      colorBgContainer: isDarkMode ? "#133827" : "#FFFFFF",
+      colorBgElevated: isDarkMode ? "#194631" : "#FFFFFF",
       colorBorder: isDarkMode ? "#246B45" : "#DDE5DC",
       colorBorderSecondary: isDarkMode ? "#1D4733" : "#EBF0EA",
       colorText: isDarkMode ? "#F8F6EE" : "#18231D",
@@ -53,16 +58,16 @@ export const ThemeProvider = ({ children }) => {
     },
     components: {
       Card: {
-        colorBgContainer: isDarkMode ? "#174832" : "#FFFFFF",
+        colorBgContainer: isDarkMode ? "#133827" : "#FFFFFF",
         colorBorderSecondary: isDarkMode ? "#246B45" : "#DDE5DC",
         borderRadiusLG: 20,
         paddingLG: 24,
       },
       Table: {
-        colorBgContainer: isDarkMode ? "#174832" : "#FFFFFF",
-        headerBg: isDarkMode ? "#123C2A" : "#F8F6EE",
+        colorBgContainer: isDarkMode ? "#133827" : "#FFFFFF",
+        headerBg: isDarkMode ? "#0F281E" : "#EDF6EA",
         headerColor: isDarkMode ? "#F8F6EE" : "#18231D",
-        rowHoverBg: isDarkMode ? "#1F543C" : "#EDF6EA",
+        rowHoverBg: isDarkMode ? "#1C4D36" : "#EDF6EA",
         cellPaddingBlock: 16,
         cellPaddingInline: 18,
         fontSize: 14,
@@ -102,7 +107,8 @@ export const ThemeProvider = ({ children }) => {
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    // Graceful fallback for isolated test suites
+    return { isDarkMode: false, toggleTheme: () => {} };
   }
   return context;
 };

@@ -15,7 +15,7 @@ export const CodeEditor = ({
 }) => {
   const { isDarkMode } = useTheme();
 
-  const monacoTheme = theme || (isDarkMode ? "vs-dark" : "light");
+  const monacoTheme = theme || (isDarkMode ? "vs-dark" : "vs");
 
   // Map language to monaco language identifier
   const resolveLanguage = (lang) => {

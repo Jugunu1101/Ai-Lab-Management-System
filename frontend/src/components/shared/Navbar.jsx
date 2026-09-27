@@ -54,10 +54,10 @@ export const Navbar = ({ collapsed, setCollapsed }) => {
       disabled: true,
       label: (
         <div style={{ padding: "4px 0" }}>
-          <div style={{ fontWeight: 700, color: "var(--cl-text, #18231D)" }}>
+          <div style={{ fontWeight: 700, color: "var(--text-primary)" }}>
             {user?.name || "User"}
           </div>
-          <div style={{ fontSize: 12, color: "var(--cl-text-secondary, #5F6B63)" }}>
+          <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
             {user?.email}
           </div>
         </div>
@@ -79,8 +79,8 @@ export const Navbar = ({ collapsed, setCollapsed }) => {
     <Header
       style={{
         padding: "0 24px",
-        background: "var(--cl-white, #FFFFFF)",
-        borderBottom: "1px solid var(--cl-border, #DDE5DC)",
+        background: "var(--bg-card)",
+        borderBottom: "1px solid var(--border-color)",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -99,7 +99,7 @@ export const Navbar = ({ collapsed, setCollapsed }) => {
             fontSize: 16,
             width: 40,
             height: 40,
-            color: "var(--cl-text, #18231D)",
+            color: "var(--text-primary)",
           }}
         />
 
@@ -125,7 +125,8 @@ export const Navbar = ({ collapsed, setCollapsed }) => {
               fontWeight: 800,
               fontFamily: "var(--font-heading)",
               letterSpacing: "-0.02em",
-              color: "var(--cl-text, #18231D)",
+              color: "var(--text-primary)",
+              whiteSpace: "nowrap",
             }}
           >
             CodeLab AI
@@ -143,7 +144,7 @@ export const Navbar = ({ collapsed, setCollapsed }) => {
               isDarkMode ? (
                 <SunOutlined style={{ color: "#F4C542" }} />
               ) : (
-                <MoonOutlined style={{ color: "#123C2A" }} />
+                <MoonOutlined style={{ color: "var(--primary)" }} />
               )
             }
             onClick={toggleTheme}
@@ -156,7 +157,7 @@ export const Navbar = ({ collapsed, setCollapsed }) => {
           <Button
             type="text"
             shape="circle"
-            icon={<BellOutlined style={{ color: "#18231D" }} />}
+            icon={<BellOutlined style={{ color: "var(--text-primary)" }} />}
             style={{ width: 38, height: 38 }}
           />
         </Tooltip>
@@ -173,7 +174,7 @@ export const Navbar = ({ collapsed, setCollapsed }) => {
           <Space style={{ cursor: "pointer" }}>
             <Avatar
               style={{
-                backgroundColor: "var(--cl-green-primary, #123C2A)",
+                backgroundColor: "var(--primary)",
                 color: "#FFFFFF",
                 fontWeight: 700,
                 cursor: "pointer",

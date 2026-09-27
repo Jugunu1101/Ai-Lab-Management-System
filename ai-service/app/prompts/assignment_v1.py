@@ -9,27 +9,33 @@ Target Programming Language: {language}
 Target Difficulty: {difficulty}
 Number of Questions: {questionCount}
 Reason for Assignment: {reason}
-Excluded Titles: {excludedTitles}
+Excluded Titles (DO NOT REUSE OR RESEMBLE): {excludedTitles}
 
 CRITICAL RULES (HARD CONSTRAINTS):
-1. LANGUAGE MUST BE STRICT:
+1. STRICT UNIQUENESS & DIVERSITY (MANDATORY):
+   - You MUST NOT generate any problem that has the same title or is substantially / semantically similar in concept, formula, logic, or objective to any problem in Excluded Titles: {excludedTitles}.
+   - Do NOT repeatedly generate generic problems like "Sum of Even Numbers", "Calculate Sum of Even Numbers", or simple even sums if similar problems are already present.
+   - You MUST generate a fresh, distinct, and creative programming problem. Explore diverse algorithmic problem patterns across the chosen topic:
+     * Loops: digit extraction & manipulation, prime number verification, Collatz sequence, factorial accumulation, alternating series, number triangles / diamond patterns, GCD via Euclidean loop, Armstrong number check, harmonic sum.
+     * Arrays: two-pointer techniques, frequency counting, prefix sums, running maximums, array rotation, remove duplicates in-place, maximum contiguous subarray sum, intersection of arrays, Dutch national flag.
+     * Strings: palindrome validation, anagram check, run-length encoding, vowel counter / reverser, longest prefix, title case formatter, substring frequency.
+     * Recursion: Tower of Hanoi, recursive exponentiation (fast power), recursive Fibonacci, recursive binary search, subset generation, string reverse recursion.
+     * Searching: linear scan with sentinel, binary search on sorted arrays, finding first/last occurrence, peak element detection, search in rotated sorted array.
+     * Sorting: bubble/selection sort step simulation, merge sorted arrays, inversion count, relative order sorting.
+
+2. LANGUAGE MUST BE STRICT:
    - If language = "c": The problem statement, starter code, and syntax expectations must be pure C (standard I/O with printf/scanf, stdlib). No C++ (cout, cin, std::), Java, or Python.
    - If language = "cpp": The problem statement, starter code, and syntax expectations must be standard C++ (iostream, cin/cout, vector).
    - If language = "java": The problem statement, starter code, and syntax expectations must be pure Java with `public class Solution` and `public static void main(String[] args)` or standard method.
    - If language = "python": The problem statement, starter code, and syntax expectations must be Python 3 with sys.stdin or function definition.
 
-2. TOPIC RELEVANCE MUST BE STRICT:
-   - If topic = "loops": The problem MUST genuinely require iterative loops (for, while, nested loops, accumulation, sequence simulation, loop-based patterns). No standalone arithmetic or unrelated algorithms.
-   - If topic = "arrays": The problem MUST focus on array/list manipulation, indexing, slicing, frequency counts, element traversal.
-   - If topic = "recursion": The problem MUST require a recursive decomposition, base cases, and divide-and-conquer logic.
-   - If topic = "searching": The problem MUST test search algorithms (linear search, binary search on sorted sequences, two pointers).
-
-3. DIFFICULTY INTEGRITY:
+3. TOPIC RELEVANCE & DIFFICULTY INTEGRITY:
    - EASY: Direct concept application and straightforward linear logic.
    - MEDIUM: Multi-step conditions, nested structures, edge cases, or two pointers.
    - HARD: Complex constraints, multiple algorithms, state tracking, and tricky corner cases.
 
-4. TEST CASES:
+4. TEST CASES & INTERNAL CONSISTENCY:
+   - Starter code and test cases MUST EXACTLY match the generated problem statement.
    - Provide at least 3-4 realistic test cases with exact input and mathematically verified expected output.
    - Include a normal case, an edge case (minimum/boundary values), and at least one hidden case (`isHidden: true`).
    - The expected output MUST be accurate and strictly match the problem specification.
@@ -37,7 +43,7 @@ CRITICAL RULES (HARD CONSTRAINTS):
 5. JSON OUTPUT FORMAT:
 Return a valid JSON object matching this schema:
 {{
-  "title": "Problem Title",
+  "title": "Unique Problem Title",
   "description": "Brief 1-2 sentence overview of the assignment",
   "language": "{language}",
   "difficulty": "{difficulty}",
@@ -48,20 +54,19 @@ Return a valid JSON object matching this schema:
   "outputFormat": "Print the resulting value...",
   "examples": [
     {{
-      "input": "10",
-      "output": "30",
-      "explanation": "Sum of even numbers 2 + 4 + 6 + 8 + 10 = 30."
+      "input": "...",
+      "output": "...",
+      "explanation": "..."
     }}
   ],
-  "expectedConcepts": ["iteration", "accumulator"],
+  "expectedConcepts": ["concept1", "concept2"],
   "testCases": [
-    {{ "input": "10", "expectedOutput": "30", "isHidden": false }},
-    {{ "input": "2", "expectedOutput": "2", "isHidden": false }},
-    {{ "input": "1", "expectedOutput": "0", "isHidden": true }},
-    {{ "input": "20", "expectedOutput": "110", "isHidden": true }}
+    {{ "input": "...", "expectedOutput": "...", "isHidden": false }},
+    {{ "input": "...", "expectedOutput": "...", "isHidden": false }},
+    {{ "input": "...", "expectedOutput": "...", "isHidden": true }}
   ],
   "starterCode": "language specific starter code...",
-  "hints": ["Consider checking whether each number i % 2 == 0 inside your loop."],
+  "hints": ["Helpful hint 1", "Helpful hint 2"],
   "explanation": "Detailed solution walkthrough explaining the optimal approach."
 }}
 """
@@ -73,7 +78,7 @@ def build_assignment_prompt(request_data: dict) -> str:
     difficulty = (request_data.get("difficulty") or "MEDIUM").upper()
     question_count = request_data.get("questionCount", 1)
     reason = request_data.get("reason", "Targeted skill improvement and practice")
-    excluded_titles = request_data.get("excludedTitles", [])
+    excluded_titles = request_data.get("excludedTitles") or request_data.get("excludedAssignments") or []
 
     return ASSIGNMENT_PROMPT_TEMPLATE.format(
         topic=topic,

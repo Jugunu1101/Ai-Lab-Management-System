@@ -36,7 +36,7 @@ def test_generate_assignment_all_required_matrix(topic, language, difficulty):
         assert tc.expectedOutput is not None
 
 def test_duplicate_problem_exclusion():
-    # If a title is excluded, AI should handle cleanly
+    # If a title is excluded, AI must NOT return that title
     req = AssignmentGenerationRequest(
         topic="loops",
         language="cpp",
@@ -46,3 +46,23 @@ def test_duplicate_problem_exclusion():
     res = generate_assignment(req)
     assert isinstance(res, AssignmentGenerationResponse)
     assert res.title is not None
+    assert "sum of even numbers" not in res.title.lower()
+
+def test_consecutive_generations_are_distinct():
+    # Test 3 consecutive generations with same parameters but accumulating exclusions
+    excluded = []
+    titles = []
+    for _ in range(3):
+        req = AssignmentGenerationRequest(
+            topic="loops",
+            language="cpp",
+            difficulty="EASY",
+            excludedTitles=list(excluded)
+        )
+        res = generate_assignment(req)
+        assert res.title not in titles
+        titles.append(res.title)
+        excluded.append(res.title)
+
+    assert len(titles) == 3
+    assert len(set(titles)) == 3

@@ -95,18 +95,53 @@ const processAIAnalysis = async (job) => {
     userId: submission.userId,
   });
 
-  const submissionSuccess = totalTests > 0 && passedTests === totalTests;
+  const assignmentTopics = (assignment.topics && assignment.topics.length > 0)
+    ? assignment.topics
+    : [assignment.topic || "basics"];
 
   await updateProgressFromSubmission({
     studentId: submission.userId,
     language: submission.language,
-    topics: assignment.topics,
+    topics: assignmentTopics,
     score: submission.score,
     submissionSuccess,
     attempts,
     mistakes: failedTests,
     aiMastery: aiResult?.mastery || [],
   });
+
+  if (submission.status !== "PASSED" || submission.score < 60 || (aiResult?.weakTopics && aiResult.weakTopics.length > 0)) {
+    try {
+      const { recordIntervention } = require("../../modules/ai/aiIntervention.service");
+      const targetTopic = (aiResult?.weakTopics && aiResult.weakTopics.length > 0)
+        ? aiResult.weakTopics[0]
+        : assignmentTopics[0];
+
+      const previousScore = submission.score;
+      const reason = (submission.status === "FAILED" || submission.status === "ERROR")
+        ? `Failed test cases on "${assignment.title}".`
+        : `Submission score (${submission.score}%) was below mastery expectations.`;
+
+      const recommendation = (aiResult?.recommendations && aiResult.recommendations.length > 0)
+        ? aiResult.recommendations[0]
+        : `Review ${targetTopic} fundamentals and practice edge cases for this problem.`;
+
+      await recordIntervention({
+        studentId: submission.userId,
+        classId: assignment.classId,
+        type: "FAILED_ASSIGNMENT",
+        topic: targetTopic,
+        language: submission.language,
+        reason,
+        recommendation,
+        previousScore,
+        source: "ASSIGNMENT_SUBMISSION",
+        referenceId: submission._id,
+      });
+    } catch (interventionErr) {
+      console.warn("[AIWorker] Failed to record intervention:", interventionErr.message);
+    }
+  }
   
   const { queueAgentDecision } = require("../agent.queue");
   await queueAgentDecision(submission.userId.toString(), "SUBMISSION_COMPLETED");

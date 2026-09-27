@@ -26,7 +26,8 @@ import {
   FileTextOutlined,
   LeftOutlined,
 } from "@ant-design/icons";
-import { Bot } from "lucide-react";
+import { Bot, Sparkles } from "lucide-react";
+import { useTheme } from "../../context/ThemeContext";
 import CodeEditor from "../../components/shared/CodeEditor";
 import SubmissionResultModal from "../../components/student/SubmissionResultModal";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
@@ -46,6 +47,7 @@ const { Option } = Select;
 export const AssignmentDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
 
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -184,10 +186,12 @@ export const AssignmentDetails = () => {
 
     setRunningTests(true);
     try {
+      const publicCases = (assignment?.testCases || []).filter((tc) => !tc.isHidden);
       const response = await submissionService.runTests({
         assignmentId: id,
         code,
         language,
+        testCases: publicCases.length > 0 ? publicCases : undefined,
       });
       const result = unwrapPayload(response);
 
@@ -213,7 +217,11 @@ export const AssignmentDetails = () => {
       }
     } catch (err) {
       setTestResults(null);
-      message.error(err.message || "Failed to run tests");
+      const errMsg =
+        err.code === "CODE_EXECUTION_UNAVAILABLE"
+          ? "Code execution service is unavailable. Please make sure the execution service is running."
+          : err.message || "Failed to run tests";
+      message.error(errMsg);
     } finally {
       setRunningTests(false);
     }
@@ -259,12 +267,18 @@ export const AssignmentDetails = () => {
       if (details && Array.isArray(details)) {
         details.forEach((d) => message.error(d));
       } else {
-        message.error(err.message || "Submission failed");
+        const errorMsg =
+          err.code === "DATABASE_UNAVAILABLE" ||
+          (err.message && (err.message.includes("database") || err.message.includes("Database") || err.message.includes("mongodb")))
+            ? "Submission could not be saved. Please check the local database connection."
+            : err.message || "Submission failed";
+        message.error(errorMsg);
       }
     } finally {
       setSubmitting(false);
     }
   };
+
 
   if (loading) {
     return <LoadingSpinner tip="Loading problem solver..." fullScreen />;
@@ -287,11 +301,11 @@ export const AssignmentDetails = () => {
           marginBottom: 16,
           flexWrap: "wrap",
           gap: 12,
-          background: "#FFFFFF",
+          background: isDarkMode ? "#174832" : "#FFFFFF",
           padding: "14px 20px",
           borderRadius: 16,
-          border: "1px solid #DDE5DC",
-          boxShadow: "0 1px 4px rgba(18, 60, 42, 0.04)",
+          border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`,
+          boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.2)" : "0 1px 4px rgba(18, 60, 42, 0.04)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
@@ -299,27 +313,44 @@ export const AssignmentDetails = () => {
             type="text"
             icon={<LeftOutlined />}
             onClick={() => navigate("/student/assignments")}
-            style={{ fontWeight: 600, color: "#246B45" }}
+            style={{ fontWeight: 600, color: isDarkMode ? "#A7F3D0" : "#246B45" }}
           >
             Assignments
           </Button>
-          <Divider type="vertical" style={{ borderColor: "#DDE5DC" }} />
+          <Divider type="vertical" style={{ borderColor: isDarkMode ? "#246B45" : "#DDE5DC" }} />
           {assignment?.source === "AI_AGENT" ? (
             <Tag
               style={{
                 borderRadius: 20,
                 fontWeight: 700,
                 padding: "4px 14px",
-                border: "1px solid #DCEEDD",
-                background: "#EDF6EA",
-                color: "#174832",
+                border: `1px solid ${isDarkMode ? "#246B45" : "#DCEEDD"}`,
+                background: isDarkMode ? "#1C543B" : "#EDF6EA",
+                color: isDarkMode ? "#A7F3D0" : "#174832",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
                 fontSize: 13,
               }}
             >
-              <Bot size={15} color="#2F7D4A" /> 🤖 AI Recommended Practice
+              <Bot size={15} color={isDarkMode ? "#A7F3D0" : "#2F7D4A"} /> 🤖 AI Practice
+            </Tag>
+          ) : assignment?.source === "AI_GENERATED" ? (
+            <Tag
+              style={{
+                borderRadius: 20,
+                fontWeight: 700,
+                padding: "4px 14px",
+                border: `1px solid ${isDarkMode ? "#6B21A8" : "#E9D5FF"}`,
+                background: isDarkMode ? "rgba(126, 34, 206, 0.25)" : "#F3E8FF",
+                color: isDarkMode ? "#E9D5FF" : "#581C87",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 13,
+              }}
+            >
+              <Sparkles size={15} color={isDarkMode ? "#C084FC" : "#7E22CE"} /> ⚡ AI-Generated Assignment
             </Tag>
           ) : (
             <Tag
@@ -327,16 +358,16 @@ export const AssignmentDetails = () => {
                 borderRadius: 20,
                 fontWeight: 700,
                 padding: "4px 14px",
-                border: "1px solid #DDE5DC",
-                background: "#F8F6EE",
-                color: "#18231D",
+                border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`,
+                background: isDarkMode ? "#1C543B" : "#F8F6EE",
+                color: isDarkMode ? "#F8F6EE" : "#18231D",
                 fontSize: 13,
               }}
             >
               Classroom Coursework
             </Tag>
           )}
-          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#18231D" }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: isDarkMode ? "#F8F6EE" : "#18231D" }}>
             {assignment?.title}
           </h2>
           <Tag
@@ -344,9 +375,9 @@ export const AssignmentDetails = () => {
               fontWeight: 700,
               borderRadius: 8,
               padding: "2px 10px",
-              background: "#EDF6EA",
-              color: "#2F7D4A",
-              border: "1px solid #DCEEDD",
+              background: isDarkMode ? "#1C543B" : "#EDF6EA",
+              color: isDarkMode ? "#A7F3D0" : "#2F7D4A",
+              border: `1px solid ${isDarkMode ? "#246B45" : "#DCEEDD"}`,
               fontSize: 12,
             }}
           >
@@ -360,13 +391,17 @@ export const AssignmentDetails = () => {
             onChange={handleLanguageChange}
             style={{ width: 140 }}
             options={PROGRAMMING_LANGUAGES.map((l) => ({ label: l.label, value: l.value }))}
-            dropdownStyle={{ background: "#FFFFFF", border: "1px solid #DDE5DC", borderRadius: 10 }}
+            dropdownStyle={{ 
+              background: isDarkMode ? "#174832" : "#FFFFFF", 
+              border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`, 
+              borderRadius: 10 
+            }}
           />
           <Button
             type="text"
             icon={<UndoOutlined />}
             onClick={handleResetCode}
-            style={{ color: "#59665E", fontWeight: 600 }}
+            style={{ color: isDarkMode ? "#9CB5A3" : "#59665E", fontWeight: 600 }}
           >
             Reset
           </Button>
@@ -376,9 +411,9 @@ export const AssignmentDetails = () => {
             loading={runningTests}
             style={{ 
               fontWeight: 600, 
-              background: "#FFFFFF", 
-              color: "#174832", 
-              borderColor: "#DDE5DC",
+              background: isDarkMode ? "#1C543B" : "#FFFFFF", 
+              color: isDarkMode ? "#F8F6EE" : "#174832", 
+              borderColor: isDarkMode ? "#246B45" : "#DDE5DC",
               height: 42,
               borderRadius: 10,
               padding: "0 18px",
@@ -393,8 +428,8 @@ export const AssignmentDetails = () => {
             loading={submitting}
             style={{ 
               fontWeight: 700,
-              background: "#123C2A",
-              borderColor: "#123C2A",
+              background: isDarkMode ? "#2F7D4A" : "#123C2A",
+              borderColor: isDarkMode ? "#2F7D4A" : "#123C2A",
               color: "#FFFFFF",
               height: 42,
               borderRadius: 10,
@@ -407,12 +442,26 @@ export const AssignmentDetails = () => {
         </Space>
       </div>
 
-      {/* AI Reasoning Banner if AI_AGENT assignment */}
-      {assignment?.source === "AI_AGENT" && (
+      {/* AI Reasoning Banner if AI_AGENT or AI_GENERATED assignment */}
+      {(assignment?.source === "AI_AGENT" || assignment?.source === "AI_GENERATED") && (
         <div
           style={{
-            background: "#EDF6EA",
-            border: "1px solid #DCEEDD",
+            background: isDarkMode
+              ? assignment?.source === "AI_AGENT"
+                ? "rgba(47, 125, 74, 0.2)"
+                : "rgba(126, 34, 206, 0.2)"
+              : assignment?.source === "AI_AGENT"
+              ? "#EDF6EA"
+              : "#F3E8FF",
+            border: `1px solid ${
+              isDarkMode
+                ? assignment?.source === "AI_AGENT"
+                  ? "#246B45"
+                  : "#7E22CE"
+                : assignment?.source === "AI_AGENT"
+                ? "#DCEEDD"
+                : "#E9D5FF"
+            }`,
             borderRadius: 12,
             padding: "12px 18px",
             marginBottom: 16,
@@ -421,13 +470,45 @@ export const AssignmentDetails = () => {
             gap: 12,
           }}
         >
-          <Bot size={22} color="#2F7D4A" />
+          {assignment?.source === "AI_AGENT" ? (
+            <Bot size={22} color={isDarkMode ? "#A7F3D0" : "#2F7D4A"} />
+          ) : (
+            <Sparkles size={22} color={isDarkMode ? "#C084FC" : "#7E22CE"} />
+          )}
           <div style={{ flex: 1 }}>
-            <span style={{ fontWeight: 700, color: "#174832", fontSize: 14 }}>
-              Weak Topic Focus: {assignment.topics?.[0] || "Practice"} •{" "}
+            <span
+              style={{
+                fontWeight: 700,
+                color: isDarkMode
+                  ? assignment?.source === "AI_AGENT"
+                    ? "#A7F3D0"
+                    : "#E9D5FF"
+                  : assignment?.source === "AI_AGENT"
+                  ? "#174832"
+                  : "#581C87",
+                fontSize: 14,
+              }}
+            >
+              {assignment?.source === "AI_AGENT"
+                ? `Weak Topic Focus: ${assignment.topics?.[0] || "Practice"} • `
+                : `AI-Generated Coursework: ${assignment.topics?.[0] || "Programming"} • `}
             </span>
-            <span style={{ color: "#59665E", fontSize: 14 }}>
-              {assignment.agentReason || "AI generated this personalized problem to help you master this concept."}
+            <span
+              style={{
+                color: isDarkMode
+                  ? assignment?.source === "AI_AGENT"
+                    ? "#DCEEDD"
+                    : "#D8B4FE"
+                  : assignment?.source === "AI_AGENT"
+                  ? "#59665E"
+                  : "#6B21A8",
+                fontSize: 14,
+              }}
+            >
+              {assignment.agentReason ||
+                (assignment?.source === "AI_AGENT"
+                  ? "AI generated this personalized problem to help you master this concept."
+                  : "Problem created via AI assistance to evaluate core algorithm proficiency.")}
             </span>
           </div>
         </div>
@@ -457,7 +538,14 @@ export const AssignmentDetails = () => {
         {/* Left Column: Problem Description & Test Cases */}
         <Card
           bordered={false}
-          style={{ height: "100%", overflowY: "auto", background: "#FFFFFF", border: "1px solid #DDE5DC", borderRadius: 16, boxShadow: "0 2px 8px rgba(18, 60, 42, 0.04)" }}
+          style={{ 
+            height: "100%", 
+            overflowY: "auto", 
+            background: isDarkMode ? "#174832" : "#FFFFFF", 
+            border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`, 
+            borderRadius: 16, 
+            boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.2)" : "0 2px 8px rgba(18, 60, 42, 0.04)" 
+          }}
           bodyStyle={{ padding: "20px 24px" }}
         >
           <Tabs
@@ -472,16 +560,23 @@ export const AssignmentDetails = () => {
                 ),
                 children: (
                   <div>
-                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: 15, lineHeight: 1.7, color: "#18231D" }}>
+                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: 15, lineHeight: 1.7, color: isDarkMode ? "#F8F6EE" : "#18231D" }}>
                       {assignment?.problemStatement || assignment?.description}
                     </Paragraph>
 
                     {assignment?.inputFormat && (
                       <div style={{ marginTop: 18 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 700, color: "#18231D", marginBottom: 6 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, color: isDarkMode ? "#F8F6EE" : "#18231D", marginBottom: 6 }}>
                           Input Format:
                         </h4>
-                        <div style={{ color: "#59665E", fontSize: 14, background: "#F8F6EE", border: "1px solid #DDE5DC", padding: "10px 14px", borderRadius: 8 }}>
+                        <div style={{ 
+                          color: isDarkMode ? "#DCEEDD" : "#59665E", 
+                          fontSize: 14, 
+                          background: isDarkMode ? "#122E22" : "#F8F6EE", 
+                          border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`, 
+                          padding: "10px 14px", 
+                          borderRadius: 8 
+                        }}>
                           {assignment.inputFormat}
                         </div>
                       </div>
@@ -489,10 +584,17 @@ export const AssignmentDetails = () => {
 
                     {assignment?.outputFormat && (
                       <div style={{ marginTop: 18 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 700, color: "#18231D", marginBottom: 6 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, color: isDarkMode ? "#F8F6EE" : "#18231D", marginBottom: 6 }}>
                           Output Format:
                         </h4>
-                        <div style={{ color: "#59665E", fontSize: 14, background: "#F8F6EE", border: "1px solid #DDE5DC", padding: "10px 14px", borderRadius: 8 }}>
+                        <div style={{ 
+                          color: isDarkMode ? "#DCEEDD" : "#59665E", 
+                          fontSize: 14, 
+                          background: isDarkMode ? "#122E22" : "#F8F6EE", 
+                          border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`, 
+                          padding: "10px 14px", 
+                          borderRadius: 8 
+                        }}>
                           {assignment.outputFormat}
                         </div>
                       </div>
@@ -500,10 +602,10 @@ export const AssignmentDetails = () => {
 
                     {assignment?.constraints && assignment.constraints.length > 0 && (
                       <div style={{ marginTop: 18 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 700, color: "#18231D", marginBottom: 6 }}>Constraints:</h4>
-                        <ul style={{ paddingLeft: 20, color: "#59665E", fontSize: 14, margin: 0 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, color: isDarkMode ? "#F8F6EE" : "#18231D", marginBottom: 6 }}>Constraints:</h4>
+                        <ul style={{ paddingLeft: 20, color: isDarkMode ? "#DCEEDD" : "#59665E", fontSize: 14, margin: 0 }}>
                           {assignment.constraints.map((c, i) => (
-                            <li key={i} style={{ marginBottom: 4 }}><code>{c}</code></li>
+                            <li key={i} style={{ marginBottom: 4 }}><code style={{ color: isDarkMode ? "#A7F3D0" : "#166534" }}>{c}</code></li>
                           ))}
                         </ul>
                       </div>
@@ -511,12 +613,27 @@ export const AssignmentDetails = () => {
 
                     {assignment?.examples && assignment.examples.length > 0 && (
                       <div style={{ marginTop: 22 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 700, color: "#18231D", marginBottom: 8 }}>Examples:</h4>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, color: isDarkMode ? "#F8F6EE" : "#18231D", marginBottom: 8 }}>Examples:</h4>
                         {assignment.examples.map((ex, i) => (
-                          <div key={i} style={{ background: "#F8F6EE", border: "1px solid #DDE5DC", padding: 14, borderRadius: 10, marginBottom: 10, fontSize: 14 }}>
-                            <div><strong>Input:</strong> <code>{ex.input}</code></div>
-                            <div style={{ marginTop: 6 }}><strong>Output:</strong> <code>{ex.output}</code></div>
-                            {ex.explanation && <div style={{ marginTop: 6, color: "#748078", fontSize: 13 }}><em>Explanation:</em> {ex.explanation}</div>}
+                          <div 
+                            key={i} 
+                            style={{ 
+                              background: isDarkMode ? "#122E22" : "#F8F6EE", 
+                              border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`, 
+                              padding: 14, 
+                              borderRadius: 10, 
+                              marginBottom: 10, 
+                              fontSize: 14,
+                              color: isDarkMode ? "#F8F6EE" : "#18231D"
+                            }}
+                          >
+                            <div><strong>Input:</strong> <code style={{ color: isDarkMode ? "#A7F3D0" : "#166534", whiteSpace: "pre-wrap", display: "inline-block" }}>{ex.input}</code></div>
+                            <div style={{ marginTop: 6 }}><strong>Output:</strong> <code style={{ color: isDarkMode ? "#A7F3D0" : "#166534", whiteSpace: "pre-wrap", display: "inline-block" }}>{ex.output}</code></div>
+                            {ex.explanation && (
+                              <div style={{ marginTop: 6, color: isDarkMode ? "#9CB5A3" : "#748078", fontSize: 13 }}>
+                                <em>Explanation:</em> {ex.explanation}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -524,12 +641,22 @@ export const AssignmentDetails = () => {
 
                     {assignment?.topics && assignment.topics.length > 0 && (
                       <div style={{ marginTop: 22 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 700, color: "#59665E", marginBottom: 8 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 700, color: isDarkMode ? "#9CB5A3" : "#59665E", marginBottom: 8 }}>
                           Related Topics:
                         </h4>
                         <Space wrap size={[6, 8]}>
                           {assignment.topics.map((t, idx) => (
-                            <Tag key={idx} style={{ background: "#EDF6EA", border: "1px solid #DCEEDD", color: "#174832", fontWeight: 600, borderRadius: 6, padding: "2px 10px" }}>
+                            <Tag 
+                              key={idx} 
+                              style={{ 
+                                background: isDarkMode ? "#1C543B" : "#EDF6EA", 
+                                border: `1px solid ${isDarkMode ? "#246B45" : "#DCEEDD"}`, 
+                                color: isDarkMode ? "#A7F3D0" : "#174832", 
+                                fontWeight: 600, 
+                                borderRadius: 6, 
+                                padding: "2px 10px" 
+                              }}
+                            >
                               {t}
                             </Tag>
                           ))}
@@ -554,25 +681,25 @@ export const AssignmentDetails = () => {
                               padding: 14,
                               borderRadius: 8,
                               marginBottom: 12,
-                              background: "var(--bg-tertiary)",
-                              border: "1px solid var(--border-color)",
+                              background: isDarkMode ? "#122E22" : "#F8F6EE",
+                              border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`,
                             }}
                           >
-                            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8 }}>
+                            <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 8, color: isDarkMode ? "#F8F6EE" : "#18231D" }}>
                               Example {index + 1}:
                             </div>
-                            <div style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-secondary)" }}>
+                            <div style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: isDarkMode ? "#DCEEDD" : "#59665E" }}>
                               <div style={{ marginBottom: 4 }}>
-                                <strong>Input:</strong> <code>{tc.input}</code>
+                                <strong>Input:</strong> <code style={{ whiteSpace: "pre-wrap", display: "inline-block" }}>{tc.input}</code>
                               </div>
                               <div>
-                                <strong>Expected Output:</strong> <code>{tc.expectedOutput}</code>
+                                <strong>Expected Output:</strong> <code style={{ whiteSpace: "pre-wrap", display: "inline-block" }}>{tc.expectedOutput}</code>
                               </div>
                             </div>
                           </div>
                         ))
                     ) : (
-                      <p style={{ color: "var(--text-muted)" }}>No public examples available.</p>
+                      <p style={{ color: isDarkMode ? "#9CB5A3" : "#748078" }}>No public examples available.</p>
                     )}
                   </div>
                 ),
@@ -626,10 +753,10 @@ export const AssignmentDetails = () => {
               flex: 1, 
               minHeight: 180, 
               overflowY: "auto",
-              background: "#0d1117",
-              border: "1px solid #30363d",
+              background: isDarkMode ? "#122E22" : "#FFFFFF",
+              border: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`,
               borderRadius: 8,
-              boxShadow: "inset 0 2px 4px rgba(0,0,0,0.2)"
+              boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.3)" : "0 2px 8px rgba(18, 60, 42, 0.04)"
             }}
             bodyStyle={{ padding: "0" }}
           >
@@ -638,16 +765,30 @@ export const AssignmentDetails = () => {
               justifyContent: "space-between", 
               alignItems: "center", 
               padding: "10px 16px",
-              background: "#161b22",
-              borderBottom: "1px solid #30363d",
+              background: isDarkMode ? "#174832" : "#F8F6EE",
+              borderBottom: `1px solid ${isDarkMode ? "#246B45" : "#DDE5DC"}`,
               borderTopLeftRadius: 8,
               borderTopRightRadius: 8,
             }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#8b949e", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              <span style={{ 
+                fontSize: 12, 
+                fontWeight: 700, 
+                color: isDarkMode ? "#9CB5A3" : "#59665E", 
+                textTransform: "uppercase", 
+                letterSpacing: "0.5px" 
+              }}>
                 Execution Console
               </span>
               {testResults && (
-                <Tag color={testResults.passed ? "success" : "error"} style={{ margin: 0, border: "none" }}>
+                <Tag 
+                  color={testResults.passed ? "success" : "error"} 
+                  style={{ 
+                    margin: 0, 
+                    fontWeight: 600,
+                    borderRadius: 6,
+                    padding: "2px 8px"
+                  }}
+                >
                   {testResults.passedCount} / {testResults.totalCount} Test Cases Passed
                 </Tag>
               )}
@@ -657,22 +798,67 @@ export const AssignmentDetails = () => {
               {testResults ? (
                 <div>
                   {testResults.status === "COMPILE_ERROR" && (
-                    <div style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", borderLeft: "3px solid var(--error)", marginBottom: 12 }}>
-                      <div style={{ color: "var(--error)", fontWeight: 700, marginBottom: 8, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ 
+                      padding: "14px 16px", 
+                      background: isDarkMode ? "rgba(200, 60, 60, 0.15)" : "#FEF2F2", 
+                      borderLeft: "4px solid #C83C3C", 
+                      border: isDarkMode ? "1px solid rgba(200, 60, 60, 0.3)" : "1px solid #FEE2E2",
+                      borderLeftWidth: "4px",
+                      borderRadius: 8,
+                      marginBottom: 12 
+                    }}>
+                      <div style={{ 
+                        color: isDarkMode ? "#FF8080" : "#C83C3C", 
+                        fontWeight: 700, 
+                        marginBottom: 8, 
+                        fontSize: 13, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 6 
+                      }}>
                         <CloseCircleFilled /> COMPILATION ERROR
                       </div>
-                      <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "'JetBrains Mono', Consolas, monospace", fontSize: 12, color: "var(--error)" }}>
+                      <pre style={{ 
+                        margin: 0, 
+                        whiteSpace: "pre-wrap", 
+                        fontFamily: "'JetBrains Mono', Consolas, monospace", 
+                        fontSize: 12, 
+                        color: isDarkMode ? "#FCA5A5" : "#991B1B",
+                        lineHeight: 1.5
+                      }}>
                         {testResults.details?.[0]?.error || "Failed to compile."}
                       </pre>
                     </div>
                   )}
                   
                   {testResults.status === "INTERNAL_ERROR" && (
-                    <div style={{ padding: "12px", background: "rgba(239, 68, 68, 0.1)", borderLeft: "3px solid var(--error)", marginBottom: 12 }}>
-                      <div style={{ color: "var(--error)", fontWeight: 700, marginBottom: 8, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div style={{ 
+                      padding: "14px 16px", 
+                      background: isDarkMode ? "rgba(200, 60, 60, 0.15)" : "#FEF2F2", 
+                      borderLeft: "4px solid #C83C3C", 
+                      border: isDarkMode ? "1px solid rgba(200, 60, 60, 0.3)" : "1px solid #FEE2E2",
+                      borderLeftWidth: "4px",
+                      borderRadius: 8,
+                      marginBottom: 12 
+                    }}>
+                      <div style={{ 
+                        color: isDarkMode ? "#FF8080" : "#C83C3C", 
+                        fontWeight: 700, 
+                        marginBottom: 8, 
+                        fontSize: 13, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 6 
+                      }}>
                         <CloseCircleFilled /> SYSTEM ERROR
                       </div>
-                      <pre style={{ margin: 0, whiteSpace: "pre-wrap", fontFamily: "'JetBrains Mono', Consolas, monospace", fontSize: 12, color: "var(--error)" }}>
+                      <pre style={{ 
+                        margin: 0, 
+                        whiteSpace: "pre-wrap", 
+                        fontFamily: "'JetBrains Mono', Consolas, monospace", 
+                        fontSize: 12, 
+                        color: isDarkMode ? "#FCA5A5" : "#991B1B" 
+                      }}>
                         The execution service failed. Please try again.
                       </pre>
                     </div>
@@ -680,54 +866,111 @@ export const AssignmentDetails = () => {
 
                   {testResults.details?.filter(r => r.input !== undefined && testResults.status !== "COMPILE_ERROR" && testResults.status !== "INTERNAL_ERROR").map((res) => {
                     let badge = null;
-                    let borderLeft = "3px solid rgba(239, 68, 68, 0.5)";
+                    let borderLeftColor = "#C83C3C";
+                    let cardBg = isDarkMode ? "#174832" : "#F8F6EE";
+                    let cardBorder = isDarkMode ? "#246B45" : "#DDE5DC";
                     
                     if (res.passed) {
-                      badge = <span style={{ color: "#10b981", fontWeight: 600 }}>Passed</span>;
-                      borderLeft = "3px solid rgba(16, 185, 129, 0.5)";
+                      badge = <span style={{ color: "#2F7D4A", fontWeight: 700 }}>PASS</span>;
+                      borderLeftColor = "#2F7D4A";
+                      cardBg = isDarkMode ? "rgba(47, 125, 74, 0.18)" : "#EDF6EA";
+                      cardBorder = isDarkMode ? "#246B45" : "#DCEEDD";
                     } else if (res.status === "TIME_LIMIT_EXCEEDED") {
-                      badge = <span style={{ color: "var(--error)", fontWeight: 600 }}>Time Limit Exceeded</span>;
+                      badge = <span style={{ color: "#D99A00", fontWeight: 700 }}>TIME LIMIT EXCEEDED</span>;
+                      borderLeftColor = "#D99A00";
                     } else if (res.status === "RUNTIME_ERROR") {
-                      badge = <span style={{ color: "var(--error)", fontWeight: 600 }}>Runtime Error</span>;
+                      badge = <span style={{ color: "#C83C3C", fontWeight: 700 }}>RUNTIME ERROR</span>;
                     } else {
-                      badge = <span style={{ color: "var(--error)", fontWeight: 600 }}>Wrong Answer</span>;
+                      badge = <span style={{ color: "#C83C3C", fontWeight: 700 }}>WRONG ANSWER</span>;
                     }
 
                     return (
                       <div
                         key={res.index}
                         style={{
-                          padding: "10px 14px",
+                          padding: "12px 16px",
                           marginBottom: 10,
-                          background: "#0d1117",
-                          borderBottom: "1px dashed #30363d",
-                          borderLeft,
-                          fontSize: 12,
+                          background: cardBg,
+                          borderRadius: 8,
+                          border: `1px solid ${cardBorder}`,
+                          borderLeft: `4px solid ${borderLeftColor}`,
+                          fontSize: 13,
                         }}
                       >
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                          <span style={{ fontWeight: 600, color: "#c9d1d9" }}>
-                            Test Case #{res.index} <span style={{ marginLeft: 8, fontSize: 11, padding: "2px 6px", background: "rgba(255,255,255,0.05)", borderRadius: 4 }}>{badge}</span>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                          <span style={{ fontWeight: 700, color: isDarkMode ? "#F8F6EE" : "#18231D", display: "flex", alignItems: "center", gap: 8 }}>
+                            Test Case #{res.index} 
+                            <span style={{ 
+                              fontSize: 11, 
+                              padding: "2px 8px", 
+                              background: isDarkMode ? "rgba(255,255,255,0.08)" : "#FFFFFF", 
+                              border: `1px solid ${cardBorder}`,
+                              borderRadius: 4 
+                            }}>
+                              {badge}
+                            </span>
                           </span>
-                          <span style={{ color: "#8b949e", fontSize: 11 }}>{res.executionTime}ms</span>
+                          <span style={{ color: isDarkMode ? "#9CB5A3" : "#748078", fontSize: 12, fontWeight: 500 }}>{res.executionTime}ms</span>
                         </div>
-                        <div style={{ fontFamily: "'JetBrains Mono', Consolas, monospace", color: "#8b949e" }}>
-                          <div style={{ marginBottom: 6, display: 'flex' }}>
-                            <span style={{ width: 70, color: "#6e7681" }}>Input:</span> 
-                            <code style={{ color: "#c9d1d9", background: "transparent" }}>{res.input}</code>
+                        <div style={{ fontFamily: "'JetBrains Mono', Consolas, monospace", fontSize: 13 }}>
+                          <div style={{ marginBottom: 6, display: 'flex', alignItems: 'baseline' }}>
+                            <span style={{ width: 80, color: isDarkMode ? "#9CB5A3" : "#59665E", fontWeight: 600 }}>Input:</span> 
+                            <code style={{ 
+                              color: isDarkMode ? "#F8F6EE" : "#18231D", 
+                              background: isDarkMode ? "rgba(0,0,0,0.25)" : "#FFFFFF",
+                              padding: "2px 8px",
+                              borderRadius: 4,
+                              border: `1px solid ${cardBorder}`,
+                              whiteSpace: "pre-wrap",
+                              display: "inline-block",
+                            }}>
+                              {res.input || "<empty>"}
+                            </code>
                           </div>
-                          <div style={{ marginBottom: 6, display: 'flex' }}>
-                            <span style={{ width: 70, color: "#6e7681" }}>Expected:</span> 
-                            <code style={{ color: "#c9d1d9", background: "transparent" }}>{res.expectedOutput}</code>
+                          <div style={{ marginBottom: 6, display: 'flex', alignItems: 'baseline' }}>
+                            <span style={{ width: 80, color: isDarkMode ? "#9CB5A3" : "#59665E", fontWeight: 600 }}>Expected:</span> 
+                            <code style={{ 
+                              color: isDarkMode ? "#A7F3D0" : "#166534", 
+                              background: isDarkMode ? "rgba(0,0,0,0.25)" : "#FFFFFF",
+                              padding: "2px 8px",
+                              borderRadius: 4,
+                              border: `1px solid ${cardBorder}`,
+                              fontWeight: 600,
+                              whiteSpace: "pre-wrap",
+                              display: "inline-block",
+                            }}>
+                              {res.expectedOutput}
+                            </code>
                           </div>
-                          {res.status !== "TIME_LIMIT_EXCEEDED" && res.status !== "RUNTIME_ERROR" && !res.passed && (
-                            <div style={{ marginBottom: 6, display: 'flex' }}>
-                              <span style={{ width: 70, color: "#6e7681" }}>Actual:</span> 
-                              <code style={{ color: "#ff7b72", background: "transparent" }}>{res.actualOutput || "<none>"}</code>
+                          {res.status !== "TIME_LIMIT_EXCEEDED" && res.status !== "RUNTIME_ERROR" && (
+                            <div style={{ marginBottom: 6, display: 'flex', alignItems: 'baseline' }}>
+                              <span style={{ width: 80, color: isDarkMode ? "#9CB5A3" : "#59665E", fontWeight: 600 }}>Actual:</span> 
+                              <code style={{ 
+                                color: res.passed 
+                                  ? (isDarkMode ? "#A7F3D0" : "#166534") 
+                                  : (isDarkMode ? "#FCA5A5" : "#991B1B"), 
+                                background: isDarkMode ? "rgba(0,0,0,0.25)" : "#FFFFFF",
+                                padding: "2px 8px",
+                                borderRadius: 4,
+                                border: `1px solid ${cardBorder}`,
+                                fontWeight: 600,
+                                whiteSpace: "pre-wrap",
+                                display: "inline-block",
+                              }}>
+                                {res.actualOutput || "<empty>"}
+                              </code>
                             </div>
                           )}
                           {res.error ? (
-                            <div style={{ color: "#ff7b72", marginTop: 8, whiteSpace: "pre-wrap", background: "rgba(255,123,114,0.1)", padding: "8px 12px", borderRadius: 4, border: "1px solid rgba(255,123,114,0.2)" }}>
+                            <div style={{ 
+                              color: isDarkMode ? "#FCA5A5" : "#991B1B", 
+                              marginTop: 8, 
+                              whiteSpace: "pre-wrap", 
+                              background: isDarkMode ? "rgba(200,60,60,0.15)" : "#FEE2E2", 
+                              padding: "8px 12px", 
+                              borderRadius: 6, 
+                              border: `1px solid ${isDarkMode ? "rgba(200,60,60,0.3)" : "#FECACA"}` 
+                            }}>
                               {res.error}
                             </div>
                           ) : null}
@@ -737,9 +980,18 @@ export const AssignmentDetails = () => {
                   })}
                 </div>
               ) : (
-                <div style={{ padding: "40px 0", textAlign: "center", color: "#8b949e", fontSize: 13, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
-                  <CodeOutlined style={{ fontSize: 32, color: "#30363d" }} />
-                  <span>Click <strong style={{ color: "#c9d1d9" }}>"Run Tests"</strong> to verify your solution against public cases, or <strong style={{ color: "#c9d1d9" }}>"Submit Solution"</strong> for automated grading.</span>
+                <div style={{ 
+                  padding: "40px 0", 
+                  textAlign: "center", 
+                  color: isDarkMode ? "#9CB5A3" : "#748078", 
+                  fontSize: 14, 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: 12 
+                }}>
+                  <CodeOutlined style={{ fontSize: 36, color: isDarkMode ? "#246B45" : "#DDE5DC" }} />
+                  <span>Click <strong style={{ color: isDarkMode ? "#F8F6EE" : "#18231D" }}>"Run Tests"</strong> to verify your solution against public cases, or <strong style={{ color: isDarkMode ? "#F8F6EE" : "#18231D" }}>"Submit Solution"</strong> for automated grading.</span>
                 </div>
               )}
             </div>

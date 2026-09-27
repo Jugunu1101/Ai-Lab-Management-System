@@ -88,4 +88,53 @@ describe('Analytics API', () => {
     expect(res.body.data).toBeDefined();
     expect(res.body.data).toHaveProperty('studentCount', 1);
   });
+
+  it('allows teacher to fetch teacher-dashboard with real at-risk students (<45% mastery)', async () => {
+    const Progress = require('../../src/modules/progress/progress.model');
+    await Progress.create({
+      studentId: studentUser._id,
+      language: 'javascript',
+      topic: 'arrays',
+      masteryScore: 42,
+    });
+
+    const res = await request(app)
+      .get('/api/analytics/teacher-dashboard')
+      .set('Authorization', `Bearer ${teacherToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toBeDefined();
+    expect(res.body.data.totalStudents).toBe(1);
+    expect(res.body.data.atRiskStudents).toHaveLength(1);
+    expect(res.body.data.atRiskStudents[0].score).toBe(42);
+    expect(res.body.data.atRiskStudents[0].reason).toContain('Mastery is below the 45% attention threshold');
+  });
+
+  it('does not flag student when mastery is 45% or above', async () => {
+    const Progress = require('../../src/modules/progress/progress.model');
+    await Progress.create({
+      studentId: studentUser._id,
+      language: 'javascript',
+      topic: 'arrays',
+      masteryScore: 45,
+    });
+
+    const res = await request(app)
+      .get('/api/analytics/teacher-dashboard')
+      .set('Authorization', `Bearer ${teacherToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.atRiskStudents).toHaveLength(0);
+  });
+
+  it('rejects student attempting to access teacher-dashboard (security)', async () => {
+    const res = await request(app)
+      .get('/api/analytics/teacher-dashboard')
+      .set('Authorization', `Bearer ${studentToken}`);
+
+    expect(res.status).toBe(403);
+  });
 });
+

@@ -17,8 +17,8 @@ export const progressService = {
     return api.get("/student/progress");
   },
 
-  getStudentTopics: async () => {
-    return api.get("/student/topics");
+  getStudentTopics: async (params = {}) => {
+    return api.get("/student/topics", { params });
   },
 
   getStudentLearningPath: async () => {

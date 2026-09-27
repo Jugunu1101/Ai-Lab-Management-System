@@ -79,4 +79,63 @@ describe('GenerateAIAssignmentModal', () => {
       expect(screen.getByRole('button', { name: /Assign to Class/i })).toBeInTheDocument();
     });
   });
+
+  it('passes current title in exclusion list when Regenerate is clicked and updates preview', async () => {
+    assignmentService.generateAIAssignment
+      .mockResolvedValueOnce({
+        data: {
+          title: 'Sum of Even Numbers',
+          description: 'Sum evens',
+          problemStatement: 'Sum all even integers up to N',
+          language: 'cpp',
+          difficulty: 'EASY',
+          topics: ['loops'],
+          testCases: [{ input: '4', expectedOutput: '6', isHidden: false }],
+          starterCode: '#include <iostream>',
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          title: 'Count Divisible Numbers in Range',
+          description: 'Count divisibles',
+          problemStatement: 'Count integers divisible by K up to N',
+          language: 'cpp',
+          difficulty: 'EASY',
+          topics: ['loops'],
+          testCases: [{ input: '15 3', expectedOutput: '5', isHidden: false }],
+          starterCode: '#include <iostream>',
+        },
+      });
+
+    render(
+      <GenerateAIAssignmentModal open={true} onClose={() => {}} onSuccess={() => {}} />
+    );
+
+    await waitFor(() => {
+      expect(classService.getClasses).toHaveBeenCalled();
+    });
+
+    const generateBtn = screen.getByRole('button', { name: /Generate Assignment/i });
+    fireEvent.click(generateBtn);
+
+    await waitFor(() => {
+      expect(screen.getByText('Sum of Even Numbers')).toBeInTheDocument();
+    });
+
+    // Click Regenerate
+    const regenBtn = screen.getByRole('button', { name: /Regenerate/i });
+    fireEvent.click(regenBtn);
+
+    await waitFor(() => {
+      expect(assignmentService.generateAIAssignment).toHaveBeenCalledTimes(2);
+      expect(assignmentService.generateAIAssignment).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          classId: 'class-1',
+          excludedTitles: expect.arrayContaining(['Sum of Even Numbers']),
+          currentTitle: 'Sum of Even Numbers',
+        })
+      );
+      expect(screen.getByText('Count Divisible Numbers in Range')).toBeInTheDocument();
+    });
+  });
 });

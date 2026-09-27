@@ -30,15 +30,22 @@ router.get(
 router.get(
   "/class/:classId",
   authenticate,
-  authorize("TEACHER"),
+  authorize("TEACHER", "ADMIN"),
   analyticsController.getClassAnalytics,
 );
 
 router.get(
   "/class/:classId/topics",
   authenticate,
-  authorize("TEACHER"),
+  authorize("TEACHER", "ADMIN"),
   analyticsController.getClassTopicAnalytics,
+);
+
+router.get(
+  "/teacher-dashboard",
+  authenticate,
+  authorize("TEACHER", "ADMIN"),
+  analyticsController.getTeacherDashboard,
 );
 
 module.exports = router;

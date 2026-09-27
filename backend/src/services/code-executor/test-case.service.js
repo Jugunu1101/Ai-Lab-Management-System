@@ -1,10 +1,14 @@
 const { executeAllTestCases } = require("./code-executor.service");
 
 const normalizeOutput = (output) => {
-  return (output || "")
-    .trim()
+  if (typeof output !== "string") return "";
+  return output
     .replace(/\r\n/g, "\n")
-    .replace(/[ \t]+$/gm, ""); // strip trailing spaces on each line
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .join("\n")
+    .trim();
 };
 
 const executeTestCases = async ({

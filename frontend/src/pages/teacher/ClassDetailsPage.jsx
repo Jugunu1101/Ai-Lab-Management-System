@@ -23,6 +23,7 @@ import {
   LeftOutlined,
   CopyOutlined,
   KeyOutlined,
+  SearchOutlined,
   InfoCircleOutlined,
 } from "@ant-design/icons";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
@@ -43,6 +44,7 @@ export const ClassDetailsPage = () => {
   const [addStudentModal, setAddStudentModal] = useState(false);
   const [studentForm] = Form.useForm();
   const [addingStudent, setAddingStudent] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
 
   const fetchClassDetails = async () => {
     setLoading(true);
@@ -107,10 +109,10 @@ export const ClassDetailsPage = () => {
       key: "email",
     },
     {
-      title: "College ID",
-      dataIndex: "collegeId",
-      key: "collegeId",
-      render: (id) => <Tag>{id || "N/A"}</Tag>,
+      title: "Department",
+      dataIndex: "department",
+      key: "department",
+      render: (dept) => <Tag>{dept || "N/A"}</Tag>,
     },
     {
       title: "Overall Mastery",
@@ -271,14 +273,37 @@ export const ClassDetailsPage = () => {
                   <TeamOutlined /> Student Roster ({cls?.students?.length || 0})
                 </span>
               ),
-              children: (
-                <Table
-                  dataSource={cls?.students || []}
-                  columns={studentColumns}
-                  rowKey="_id"
-                  pagination={{ pageSize: 10 }}
-                />
-              ),
+              children: (() => {
+                const cleanStudentSearch = (studentSearch || "").trim().toLowerCase();
+                const filteredStudents = (cls?.students || []).filter((s) => {
+                  if (!cleanStudentSearch) return true;
+                  return (
+                    s.name?.toLowerCase().includes(cleanStudentSearch) ||
+                    s.email?.toLowerCase().includes(cleanStudentSearch) ||
+                    s.department?.toLowerCase().includes(cleanStudentSearch)
+                  );
+                });
+                return (
+                  <div>
+                    <div style={{ marginBottom: 16, maxWidth: 360 }}>
+                      <Input
+                        prefix={<SearchOutlined style={{ color: "var(--text-muted)" }} />}
+                        placeholder="Search roster by name, email, department..."
+                        value={studentSearch}
+                        onChange={(e) => setStudentSearch(e.target.value)}
+                        allowClear
+                        style={{ borderRadius: 8 }}
+                      />
+                    </div>
+                    <Table
+                      dataSource={filteredStudents}
+                      columns={studentColumns}
+                      rowKey="_id"
+                      pagination={{ pageSize: 10 }}
+                    />
+                  </div>
+                );
+              })(),
             },
             {
               key: "info",

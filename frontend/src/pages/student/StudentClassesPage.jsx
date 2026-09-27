@@ -54,14 +54,18 @@ export const StudentClassesPage = () => {
     fetchClasses();
   }, []);
 
+  const cleanTerm = (searchTerm || "").trim().toLowerCase();
   const filteredClasses = classes.filter((c) => {
-    if (!searchTerm) return true;
-    const term = searchTerm.toLowerCase();
-    const nameMatch = c.name?.toLowerCase().includes(term);
-    const codeMatch = c.code?.toLowerCase().includes(term);
-    const teacherMatch = c.teacherId?.name?.toLowerCase().includes(term);
-    const deptMatch = c.department?.toLowerCase().includes(term);
-    return nameMatch || codeMatch || teacherMatch || deptMatch;
+    if (!cleanTerm) return true;
+    const nameMatch = c.name?.toLowerCase().includes(cleanTerm);
+    const codeMatch = c.code?.toLowerCase().includes(cleanTerm);
+    const teacherMatch =
+      c.teacherId?.name?.toLowerCase().includes(cleanTerm) ||
+      c.teacherName?.toLowerCase().includes(cleanTerm) ||
+      c.teacher?.name?.toLowerCase().includes(cleanTerm);
+    const deptMatch = c.department?.toLowerCase().includes(cleanTerm);
+    const descMatch = c.description?.toLowerCase().includes(cleanTerm);
+    return nameMatch || codeMatch || teacherMatch || deptMatch || descMatch;
   });
 
   if (loading) return <LoadingSpinner tip="Loading your enrolled classes..." />;
@@ -136,8 +140,8 @@ export const StudentClassesPage = () => {
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
-                  background: "#FFFFFF",
-                  border: "1px solid #DDE5DC",
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border-color)",
                   borderRadius: 20,
                   padding: 26,
                   boxShadow: "0 2px 8px rgba(18, 60, 42, 0.04)",
@@ -155,9 +159,9 @@ export const StudentClassesPage = () => {
                   >
                     <span
                       style={{
-                        background: "#EDF6EA",
-                        color: "#123C2A",
-                        border: "1px solid #DCEEDD",
+                        background: "var(--cl-green-light)",
+                        color: "var(--cl-green-dark)",
+                        border: "1px solid var(--border-subtle)",
                         borderRadius: 6,
                         padding: "4px 10px",
                         fontSize: 13,
@@ -170,9 +174,9 @@ export const StudentClassesPage = () => {
                     {item.semester && (
                       <span
                         style={{
-                          background: "#F8F6EE",
-                          color: "#59665E",
-                          border: "1px solid #DDE5DC",
+                          background: "var(--bg-tertiary)",
+                          color: "var(--text-secondary)",
+                          border: "1px solid var(--border-subtle)",
                           borderRadius: 6,
                           padding: "4px 10px",
                           fontSize: 12,
@@ -193,7 +197,7 @@ export const StudentClassesPage = () => {
                     style={{
                       fontSize: 21,
                       fontWeight: 700,
-                      color: "#18231D",
+                      color: "var(--text-primary)",
                       marginBottom: 6,
                       lineHeight: 1.3,
                     }}
@@ -207,7 +211,7 @@ export const StudentClassesPage = () => {
                       style={{
                         display: "block",
                         fontSize: 14,
-                        color: "#59665E",
+                        color: "var(--text-secondary)",
                         fontWeight: 500,
                         marginBottom: 10,
                       }}
@@ -220,7 +224,7 @@ export const StudentClassesPage = () => {
                     <Paragraph
                       ellipsis={{ rows: 2 }}
                       style={{
-                        color: "#59665E",
+                        color: "var(--text-secondary)",
                         fontSize: 14,
                         lineHeight: 1.55,
                         marginBottom: 16,
@@ -233,8 +237,8 @@ export const StudentClassesPage = () => {
                   {/* Instructor Box */}
                   <div
                     style={{
-                      background: "#F8F6EE",
-                      border: "1px solid #DDE5DC",
+                      background: "var(--bg-tertiary)",
+                      border: "1px solid var(--border-subtle)",
                       padding: "12px 16px",
                       borderRadius: 12,
                       marginBottom: 16,
@@ -248,10 +252,10 @@ export const StudentClassesPage = () => {
                         marginBottom: 4,
                         fontSize: 14,
                         fontWeight: 600,
-                        color: "#18231D",
+                        color: "var(--text-primary)",
                       }}
                     >
-                      <UserOutlined style={{ color: "#246B45" }} />
+                      <UserOutlined style={{ color: "var(--primary)" }} />
                       <span>{item.teacherId?.name || "Instructor"}</span>
                     </div>
                     {item.teacherId?.email && (
@@ -260,11 +264,11 @@ export const StudentClassesPage = () => {
                           display: "flex",
                           alignItems: "center",
                           gap: 8,
-                          color: "#59665E",
+                          color: "var(--text-secondary)",
                           fontSize: 13,
                         }}
                       >
-                        <MailOutlined style={{ color: "#748078" }} />
+                        <MailOutlined style={{ color: "var(--text-muted)" }} />
                         <span>{item.teacherId.email}</span>
                       </div>
                     )}
@@ -277,7 +281,7 @@ export const StudentClassesPage = () => {
                         style={{
                           fontSize: 13,
                           fontWeight: 600,
-                          color: "#748078",
+                          color: "var(--text-muted)",
                           display: "block",
                           marginBottom: 6,
                         }}
@@ -289,9 +293,9 @@ export const StudentClassesPage = () => {
                           <span
                             key={lang}
                             style={{
-                              background: "#EDF6EA",
-                              color: "#246B45",
-                              border: "1px solid #DCEEDD",
+                              background: "var(--cl-green-light)",
+                              color: "var(--cl-green-dark)",
+                              border: "1px solid var(--border-subtle)",
                               borderRadius: 6,
                               padding: "2px 8px",
                               fontSize: 12,
@@ -310,7 +314,7 @@ export const StudentClassesPage = () => {
                 {/* Card Actions */}
                 <div
                   style={{
-                    borderTop: "1px solid #E8EFE7",
+                    borderTop: "1px solid var(--border-subtle)",
                     paddingTop: 16,
                     marginTop: 8,
                   }}
@@ -354,7 +358,7 @@ export const StudentClassesPage = () => {
       {/* Class Details Modal */}
       <Modal
         title={
-          <span style={{ fontSize: 20, fontWeight: 700, color: "#18231D" }}>
+          <span style={{ fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>
             {selectedClass?.name || "Class Details"}
           </span>
         }
@@ -392,7 +396,7 @@ export const StudentClassesPage = () => {
             column={1}
             bordered
             size="middle"
-            style={{ marginTop: 20, background: "#FFFFFF" }}
+            style={{ marginTop: 20, background: "var(--bg-card)" }}
           >
             <Descriptions.Item label="Course Code">
               <strong>{selectedClass.code || "N/A"}</strong>

@@ -11,6 +11,7 @@ import {
   Tabs,
   Alert,
   Divider,
+  Input,
 } from "antd";
 import {
   LeftOutlined,
@@ -19,6 +20,7 @@ import {
   CloseCircleOutlined,
   CodeOutlined,
   BulbOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import SubmissionResultModal from "../../components/student/SubmissionResultModal";
 import LoadingSpinner from "../../components/shared/LoadingSpinner";
@@ -40,6 +42,7 @@ export const SubmissionReviewPage = () => {
 
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const loadReviewData = async () => {
@@ -186,9 +189,29 @@ export const SubmissionReviewPage = () => {
         </div>
       </div>
 
+      <div style={{ marginBottom: 16, maxWidth: 380 }}>
+        <Input
+          prefix={<SearchOutlined style={{ color: "var(--text-muted)" }} />}
+          placeholder="Search student by name, email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          allowClear
+          style={{ borderRadius: 8 }}
+        />
+      </div>
+
       <Card className="glass-card" bordered={false} bodyStyle={{ padding: 0 }}>
         <Table
-          dataSource={submissions}
+          dataSource={(() => {
+            const cleanTerm = (searchTerm || "").trim().toLowerCase();
+            return submissions.filter((rec) => {
+              if (!cleanTerm) return true;
+              const name = (rec.student?.name || "").toLowerCase();
+              const email = (rec.student?.email || "").toLowerCase();
+              const status = (rec.latestStatus || "").toLowerCase();
+              return name.includes(cleanTerm) || email.includes(cleanTerm) || status.includes(cleanTerm);
+            });
+          })()}
           columns={columns}
           rowKey={(record) => record.student?._id || Math.random().toString()}
           pagination={{ pageSize: 10 }}

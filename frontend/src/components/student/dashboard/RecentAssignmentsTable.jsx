@@ -1,5 +1,5 @@
 import React from "react";
-import { BookOpen, ArrowRight, Bot, UserCheck } from "lucide-react";
+import { BookOpen, ArrowRight, Bot, UserCheck, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export const RecentAssignmentsTable = ({ assignments = [] }) => {
@@ -73,7 +73,8 @@ export const RecentAssignmentsTable = ({ assignments = [] }) => {
                   (Array.isArray(item.topics) && item.topics.length > 0
                     ? item.topics[0]
                     : "Programming");
-                const isAI = item.source === "AI_AGENT";
+                const isAiAgent = item.source === "AI_AGENT";
+                const isAiGenerated = item.source === "AI_GENERATED";
                 const { label: statusLabel, className: statusClass } =
                   getStatusInfo(item.status, item.score);
                 const difficulty = (item.difficulty || "Medium").toLowerCase();
@@ -87,9 +88,13 @@ export const RecentAssignmentsTable = ({ assignments = [] }) => {
                     </td>
                     <td>{topic}</td>
                     <td>
-                      {isAI ? (
+                      {isAiAgent ? (
                         <span className="cl-source-badge ai">
-                          <Bot size={12} /> AI
+                          <Bot size={12} /> AI Practice
+                        </span>
+                      ) : isAiGenerated ? (
+                        <span className="cl-source-badge ai" style={{ background: "#F3E8FF", color: "#581C87", border: "1px solid #E9D5FF" }}>
+                          <Sparkles size={12} /> AI Generated
                         </span>
                       ) : (
                         <span className="cl-source-badge teacher">

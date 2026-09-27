@@ -96,7 +96,7 @@ const registerUser = async ({
   const token = jwt.sign(
     {
       userId: user._id.toString(),
-      role: user.role,
+      role: (user.role || "STUDENT").toString().trim().toUpperCase(),
       collegeId: user.collegeId ? user.collegeId.toString() : null,
     },
     process.env.JWT_SECRET,
@@ -165,7 +165,7 @@ const loginUser = async ({ email, password }) => {
   const token = jwt.sign(
     {
       userId: user._id.toString(),
-      role: user.role,
+      role: (user.role || "STUDENT").toString().trim().toUpperCase(),
       collegeId: user.collegeId?._id ? user.collegeId._id.toString() : (user.collegeId ? user.collegeId.toString() : null),
     },
     process.env.JWT_SECRET,

@@ -135,6 +135,7 @@ describe("StudentDashboard Component (Complete Redesign)", () => {
 
     // Wait for header to appear first
     expect((await screen.findAllByText(/Rahul/)).length).toBeGreaterThan(0);
+    expect(screen.getByPlaceholderText("Search assignment name...")).toBeInTheDocument();
 
     expect(screen.getByText("Your Learning Progress")).toBeInTheDocument();
     expect(screen.getByText(/68%/)).toBeInTheDocument();

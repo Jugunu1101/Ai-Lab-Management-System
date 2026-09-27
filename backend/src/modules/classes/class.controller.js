@@ -2,8 +2,14 @@ const classService = require("./class.service");
 
 const createClass = async (req, res, next) => {
   try {
+    const { name, code, department, description, languages, semester } = req.body;
     const newClass = await classService.createClass({
-      ...req.body,
+      name,
+      code,
+      department,
+      description,
+      languages,
+      semester,
       teacherId: req.user.userId,
       collegeId: req.user.collegeId,
     });
@@ -11,6 +17,24 @@ const createClass = async (req, res, next) => {
     return res.status(201).json({
       success: true,
       data: newClass,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteClass = async (req, res, next) => {
+  try {
+    const result = await classService.deleteClass({
+      classId: req.params.classId,
+      userId: req.user.userId,
+      role: req.user.role,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Class "${result.deletedClassName}" deleted successfully`,
+      data: result,
     });
   } catch (error) {
     next(error);
@@ -40,6 +64,7 @@ const getClasses = async (req, res, next) => {
     const classes = await classService.getClasses({
       userId: req.user.userId,
       role: req.user.role,
+      search: req.query.search || req.query.q || req.query.searchTerm,
     });
 
     return res.status(200).json({
@@ -103,6 +128,7 @@ const joinClassByCode = async (req, res, next) => {
 
 module.exports = {
   createClass,
+  deleteClass,
   addStudent,
   getClasses,
   getClassById,

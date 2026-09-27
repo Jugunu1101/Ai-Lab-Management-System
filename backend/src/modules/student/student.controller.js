@@ -27,6 +27,7 @@ const getStudentTopics = async (req, res, next) => {
   try {
     const data = await studentService.getStudentTopics({
       studentId: req.user.userId,
+      classId: req.query.classId,
       language: req.query.language,
     });
     return res.status(200).json({ success: true, data });

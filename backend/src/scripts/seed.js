@@ -112,7 +112,7 @@ const seedDatabase = async () => {
       console.log("Class already exists: CS101");
     }
 
-    // 5. Seed Assignment
+    // 5. Seed Assignment: Find Double of Number (JavaScript)
     let assignment = await Assignment.findOne({ title: "Find Double of Number" });
     if (!assignment) {
       assignment = await Assignment.create({
@@ -135,6 +135,54 @@ const seedDatabase = async () => {
     } else {
       console.log("Assignment already exists: Find Double of Number");
     }
+
+    // 6. Seed Assignment: Nested Number Triangle Pattern (C++)
+    let cppAssignment = await Assignment.findOne({ title: "Nested Number Triangle Pattern" });
+    if (!cppAssignment) {
+      cppAssignment = await Assignment.create({
+        title: "Nested Number Triangle Pattern",
+        description: "Given an integer N, generate a right-aligned number pyramid of height N where row i contains numbers 1 through i separated by a space.",
+        language: "cpp",
+        difficulty: "MEDIUM",
+        topics: ["nested loops", "patterns", "cpp"],
+        testCases: [
+          { input: "3", expectedOutput: "1\n1 2\n1 2 3", isHidden: false },
+          { input: "1", expectedOutput: "1", isHidden: false },
+          { input: "4", expectedOutput: "1\n1 2\n1 2 3\n1 2 3 4", isHidden: true },
+          { input: "2", expectedOutput: "1\n1 2", isHidden: true },
+        ],
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        classId: sampleClass._id,
+        createdBy: teacher._id,
+      });
+      console.log("Created Sample Assignment: Nested Number Triangle Pattern (C++)");
+    } else {
+      console.log("Assignment already exists: Nested Number Triangle Pattern");
+    }
+
+    // 7. Seed Assignment: Reverse a String (Python)
+    let pyAssignment = await Assignment.findOne({ title: "Reverse a String" });
+    if (!pyAssignment) {
+      pyAssignment = await Assignment.create({
+        title: "Reverse a String",
+        description: "Read a string from standard input and print the reversed string to standard output.",
+        language: "python",
+        difficulty: "EASY",
+        topics: ["strings", "basics", "python"],
+        testCases: [
+          { input: "hello", expectedOutput: "olleh", isHidden: false },
+          { input: "world", expectedOutput: "dlrow", isHidden: false },
+          { input: "racecar", expectedOutput: "racecar", isHidden: true },
+        ],
+        deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        classId: sampleClass._id,
+        createdBy: teacher._id,
+      });
+      console.log("Created Sample Assignment: Reverse a String (Python)");
+    } else {
+      console.log("Assignment already exists: Reverse a String");
+    }
+
 
     console.log("\n========================================================");
     console.log(" DATABASE SEEDING COMPLETED SUCCESSFULLY!");

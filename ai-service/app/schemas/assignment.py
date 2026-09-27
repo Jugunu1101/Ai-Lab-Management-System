@@ -35,7 +35,8 @@ class AssignmentGenerationRequest(BaseModel):
     difficulty: Optional[str] = "MEDIUM"
     questionCount: Optional[int] = 1
     reason: Optional[str] = None
-    excludedTitles: Optional[List[str]] = None
+    excludedTitles: Optional[List[str]] = Field(default_factory=list)
+    excludedAssignments: Optional[List[str]] = Field(default_factory=list)
 
 class AssignmentGenerationResponse(BaseModel):
     title: str

@@ -127,7 +127,9 @@ export const StudentProgressView = () => {
               )}
             </div>
             <Text style={{ color: "var(--text-muted)", fontSize: 13 }}>
-              {student.email} • ID: {student.collegeId} • {student.department}
+              {[student.email, student.department && student.department !== "—" ? student.department : null]
+                .filter(Boolean)
+                .join(" • ")}
             </Text>
           </div>
         </div>

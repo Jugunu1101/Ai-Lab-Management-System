@@ -24,6 +24,9 @@ const generateAIAssignment = async (req, res, next) => {
       difficulty: req.body.difficulty,
       questionCount: req.body.questionCount,
       classId: req.body.classId,
+      excludedTitles: req.body.excludedTitles,
+      excludedAssignments: req.body.excludedAssignments,
+      currentTitle: req.body.currentTitle,
       teacherId: req.user.userId,
     });
 
@@ -43,6 +46,9 @@ const getAssignments = async (req, res, next) => {
       role: req.user.role,
       limit: req.query.limit,
       page: req.query.page,
+      search: req.query.search || req.query.q || req.query.searchTerm,
+      topic: req.query.topic,
+      difficulty: req.query.difficulty,
     });
 
     return res.status(200).json({

@@ -70,7 +70,7 @@ services:
       - "3001:3000"
     environment:
       - PORT=3000
-      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/programming_lab}
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/ai-lab}
       - MONGODB_DB_NAME=ai-lab
       - REDIS_URL=redis://redis:6379
       - AI_SERVICE_URL=http://ai-service:8000

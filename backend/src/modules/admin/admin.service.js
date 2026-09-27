@@ -111,13 +111,18 @@ const getUsers = async ({
     filter.approvalStatus = approvalStatus.toUpperCase();
   }
 
-  if (search) {
-    const searchRegex = new RegExp(search, "i");
-    filter.$or = [{ name: searchRegex }, { email: searchRegex }];
+  if (search && search.trim()) {
+    const sanitized = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const searchRegex = new RegExp(sanitized, "i");
+    filter.$or = [
+      { name: searchRegex },
+      { email: searchRegex },
+      { department: searchRegex },
+    ];
   }
 
   const pageNum = Math.max(1, parseInt(page, 10));
-  const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10)));
+  const limitNum = Math.max(1, Math.min(500, parseInt(limit, 10)));
   const skip = (pageNum - 1) * limitNum;
 
   const [users, total] = await Promise.all([

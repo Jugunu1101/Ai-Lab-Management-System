@@ -75,8 +75,16 @@ export const LearningPathPage = () => {
   }
 
   // Find the first IN_PROGRESS step to be the "Current" step
-  const currentStepIndex =
-    learningPath?.steps?.findIndex((s) => s.status === "IN_PROGRESS") ?? 0;
+  let currentStepIndex =
+    learningPath?.steps?.findIndex((s) => s.status === "IN_PROGRESS");
+  if (currentStepIndex === -1 || currentStepIndex === undefined || currentStepIndex === null) {
+    const firstPending = learningPath?.steps?.findIndex((s) => s.status !== "COMPLETED");
+    if (firstPending !== -1 && firstPending !== undefined) {
+      currentStepIndex = firstPending;
+    } else {
+      currentStepIndex = Math.max(0, (learningPath?.steps?.length || 1) - 1);
+    }
+  }
   const currentStep = learningPath?.steps?.[currentStepIndex];
 
   return (
@@ -93,12 +101,12 @@ export const LearningPathPage = () => {
       <div
         className="cl-card"
         style={{
-          background: "#FFFFFF",
+          background: "var(--bg-card)",
           borderRadius: 20,
           padding: 32,
           marginBottom: 32,
-          border: "1px solid #DDE5DC",
-          boxShadow: "0 2px 10px rgba(18, 60, 42, 0.04)",
+          border: "1px solid var(--border-color)",
+          boxShadow: "var(--shadow-sm)",
         }}
       >
         <div style={{ marginBottom: 28 }}>
@@ -116,20 +124,20 @@ export const LearningPathPage = () => {
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
                 fontWeight: 700,
-                color: "#59665E",
+                color: "var(--text-secondary)",
               }}
             >
               Curriculum Mastery Progress
             </span>
-            <span style={{ fontSize: 24, fontWeight: 800, color: "#123C2A" }}>
+            <span style={{ fontSize: 24, fontWeight: 800, color: "var(--text-primary)" }}>
               {overallMastery}%
             </span>
           </div>
           <Progress
             percent={overallMastery}
             showInfo={false}
-            strokeColor="#2F7D4A"
-            trailColor="#EDF6EA"
+            strokeColor="var(--cl-success)"
+            trailColor="var(--bg-tertiary)"
             strokeWidth={14}
             style={{ margin: 0 }}
           />
@@ -139,10 +147,10 @@ export const LearningPathPage = () => {
           <Col xs={24} md={12}>
             <div
               style={{
-                background: "#EDF6EA",
+                background: "var(--bg-tertiary)",
                 borderRadius: 16,
                 padding: "20px 24px",
-                border: "1px solid #DCEEDD",
+                border: "1px solid var(--border-color)",
                 height: "100%",
               }}
             >
@@ -153,7 +161,7 @@ export const LearningPathPage = () => {
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   fontWeight: 700,
-                  color: "#246B45",
+                  color: "var(--cl-green-forest)",
                   marginBottom: 8,
                 }}
               >
@@ -163,7 +171,7 @@ export const LearningPathPage = () => {
                 style={{
                   fontSize: 20,
                   fontWeight: 800,
-                  color: "#123C2A",
+                  color: "var(--text-primary)",
                   lineHeight: 1.3,
                 }}
               >
@@ -175,10 +183,10 @@ export const LearningPathPage = () => {
           <Col xs={24} md={12}>
             <div
               style={{
-                background: "#F8F6EE",
+                background: "var(--bg-tertiary)",
                 borderRadius: 16,
                 padding: "20px 24px",
-                border: "1px solid #DDE5DC",
+                border: "1px solid var(--border-color)",
                 height: "100%",
               }}
             >
@@ -189,7 +197,7 @@ export const LearningPathPage = () => {
                   textTransform: "uppercase",
                   letterSpacing: "0.05em",
                   fontWeight: 700,
-                  color: "#59665E",
+                  color: "var(--text-secondary)",
                   marginBottom: 8,
                 }}
               >
@@ -199,7 +207,7 @@ export const LearningPathPage = () => {
                 style={{
                   fontSize: 15,
                   lineHeight: 1.55,
-                  color: "#18231D",
+                  color: "var(--text-primary)",
                   margin: 0,
                 }}
               >
@@ -215,10 +223,10 @@ export const LearningPathPage = () => {
       <div
         className="cl-card"
         style={{
-          background: "#FFFFFF",
+          background: "var(--bg-card)",
           borderRadius: 20,
           padding: 32,
-          border: "1px solid #DDE5DC",
+          border: "1px solid var(--border-color)",
           marginBottom: 32,
         }}
       >
@@ -226,14 +234,14 @@ export const LearningPathPage = () => {
           style={{
             fontSize: 22,
             fontWeight: 700,
-            color: "#18231D",
+            color: "var(--text-primary)",
             marginBottom: 28,
             display: "flex",
             alignItems: "center",
             gap: 10,
           }}
         >
-          <Compass size={24} color="#123C2A" /> Learning Roadmap
+          <Compass size={24} color="var(--primary)" /> Learning Roadmap
         </h2>
 
         <div style={{ position: "relative", paddingLeft: 8 }}>
@@ -245,14 +253,19 @@ export const LearningPathPage = () => {
               top: 24,
               bottom: 24,
               width: 3,
-              background: "#E8EFE7",
+              background: "var(--border-subtle)",
             }}
           />
 
           {learningPath?.steps?.map((step, index) => {
             let state = "locked";
-            if (index < currentStepIndex) state = "completed";
-            if (index === currentStepIndex) state = "current";
+            if (step.status === "COMPLETED" || (currentStepIndex >= 0 && index < currentStepIndex)) {
+              state = "completed";
+            } else if (step.status === "IN_PROGRESS" || index === currentStepIndex) {
+              state = "current";
+            } else {
+              state = "locked";
+            }
 
             const isCurrent = state === "current";
             const isCompleted = state === "completed";
@@ -276,7 +289,7 @@ export const LearningPathPage = () => {
                         width: 28,
                         height: 28,
                         borderRadius: "50%",
-                        background: "#2F7D4A",
+                        background: "var(--cl-success)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -291,12 +304,12 @@ export const LearningPathPage = () => {
                         width: 28,
                         height: 28,
                         borderRadius: "50%",
-                        background: "#123C2A",
+                        background: "var(--primary)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#F4C542",
-                        boxShadow: "0 0 0 4px #EDF6EA",
+                        color: "var(--cl-yellow)",
+                        boxShadow: "0 0 0 4px var(--bg-tertiary)",
                       }}
                     >
                       <ArrowRight size={16} strokeWidth={3} />
@@ -307,12 +320,12 @@ export const LearningPathPage = () => {
                         width: 28,
                         height: 28,
                         borderRadius: "50%",
-                        background: "#F8F6EE",
-                        border: "2px solid #DDE5DC",
+                        background: "var(--bg-tertiary)",
+                        border: "2px solid var(--border-color)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#748078",
+                        color: "var(--text-muted)",
                       }}
                     >
                       <Lock size={14} />
@@ -324,14 +337,14 @@ export const LearningPathPage = () => {
                 <div
                   style={{
                     flex: 1,
-                    background: isCurrent ? "#EDF6EA" : "#FFFFFF",
+                    background: isCurrent ? "var(--bg-tertiary)" : "var(--bg-card)",
                     border: isCurrent
-                      ? "1.5px solid #246B45"
-                      : "1px solid #E8EFE7",
+                      ? "1.5px solid var(--cl-green-forest)"
+                      : "1px solid var(--border-color)",
                     borderRadius: 16,
                     padding: "20px 24px",
                     boxShadow: isCurrent
-                      ? "0 4px 12px rgba(36, 107, 69, 0.08)"
+                      ? "var(--shadow-md)"
                       : "none",
                   }}
                 >
@@ -351,10 +364,10 @@ export const LearningPathPage = () => {
                         fontSize: 19,
                         fontWeight: 700,
                         color: isCurrent
-                          ? "#123C2A"
+                          ? "var(--text-primary)"
                           : isCompleted
-                          ? "#18231D"
-                          : "#59665E",
+                          ? "var(--text-primary)"
+                          : "var(--text-secondary)",
                       }}
                     >
                       {index + 1}. {step.topic}
@@ -363,7 +376,7 @@ export const LearningPathPage = () => {
                     {isCurrent && (
                       <span
                         style={{
-                          background: "#123C2A",
+                          background: "var(--primary)",
                           color: "#FFFFFF",
                           padding: "3px 12px",
                           borderRadius: 8,
@@ -377,9 +390,9 @@ export const LearningPathPage = () => {
                     {isCompleted && (
                       <span
                         style={{
-                          background: "#EDF6EA",
-                          color: "#2F7D4A",
-                          border: "1px solid #DCEEDD",
+                          background: "var(--bg-tertiary)",
+                          color: "var(--cl-success)",
+                          border: "1px solid var(--border-color)",
                           padding: "3px 12px",
                           borderRadius: 8,
                           fontSize: 13,
@@ -392,9 +405,9 @@ export const LearningPathPage = () => {
                     {state === "locked" && (
                       <span
                         style={{
-                          background: "#F8F6EE",
-                          color: "#748078",
-                          border: "1px solid #DDE5DC",
+                          background: "var(--bg-tertiary)",
+                          color: "var(--text-muted)",
+                          border: "1px solid var(--border-color)",
                           padding: "3px 12px",
                           borderRadius: 8,
                           fontSize: 13,
@@ -409,10 +422,10 @@ export const LearningPathPage = () => {
                   <p
                     style={{
                       color: isCurrent
-                        ? "#18231D"
+                        ? "var(--text-primary)"
                         : isCompleted
-                        ? "#59665E"
-                        : "#748078",
+                        ? "var(--text-secondary)"
+                        : "var(--text-muted)",
                       fontSize: 15,
                       lineHeight: 1.55,
                       margin: "6px 0 12px 0",
@@ -428,7 +441,7 @@ export const LearningPathPage = () => {
                         display: "flex",
                         alignItems: "center",
                         gap: 8,
-                        color: isCurrent ? "#246B45" : "#748078",
+                        color: isCurrent ? "var(--cl-green-forest)" : "var(--text-muted)",
                         fontSize: 14,
                         fontWeight: isCurrent ? 600 : 500,
                       }}
@@ -449,11 +462,11 @@ export const LearningPathPage = () => {
         <div
           className="cl-card"
           style={{
-            background: "#FFFFFF",
-            border: "2px solid #246B45",
+            background: "var(--bg-card)",
+            border: "2px solid var(--cl-green-forest)",
             borderRadius: 20,
             padding: 32,
-            boxShadow: "0 6px 20px rgba(36, 107, 69, 0.08)",
+            boxShadow: "var(--shadow-md)",
             marginBottom: 32,
           }}
         >
@@ -462,24 +475,24 @@ export const LearningPathPage = () => {
               display: "inline-flex",
               alignItems: "center",
               gap: 8,
-              background: "#EDF6EA",
+              background: "var(--bg-tertiary)",
               padding: "6px 14px",
               borderRadius: 20,
-              color: "#123C2A",
+              color: "var(--text-primary)",
               fontSize: 13,
               fontWeight: 700,
               marginBottom: 16,
-              border: "1px solid #DCEEDD",
+              border: "1px solid var(--border-color)",
             }}
           >
-            <Sparkles size={16} color="#246B45" /> 🤖 AI Recommended Practice
+            <Sparkles size={16} color="var(--cl-green-forest)" /> 🤖 AI Recommended Practice
           </div>
 
           <h2
             style={{
               fontSize: 22,
               fontWeight: 700,
-              color: "#18231D",
+              color: "var(--text-primary)",
               margin: "0 0 10px 0",
             }}
           >
@@ -488,7 +501,7 @@ export const LearningPathPage = () => {
 
           <p
             style={{
-              color: "#59665E",
+              color: "var(--text-secondary)",
               fontSize: 15,
               lineHeight: 1.6,
               marginBottom: 16,
@@ -500,13 +513,13 @@ export const LearningPathPage = () => {
           {learningPath.aiRecommendedAssignment.agentReason && (
             <div
               style={{
-                background: "#EDF6EA",
+                background: "var(--bg-tertiary)",
                 padding: "14px 18px",
                 borderRadius: 12,
-                borderLeft: "4px solid #246B45",
+                borderLeft: "4px solid var(--cl-green-forest)",
                 marginBottom: 24,
                 fontSize: 14,
-                color: "#123C2A",
+                color: "var(--text-primary)",
                 lineHeight: 1.5,
               }}
             >
@@ -544,8 +557,8 @@ export const LearningPathPage = () => {
         <div
           className="cl-card"
           style={{
-            background: "#FFFFFF",
-            border: "1.5px solid #246B45",
+            background: "var(--bg-card)",
+            border: "1.5px solid var(--cl-green-forest)",
             borderRadius: 20,
             padding: 32,
             textAlign: "center",
@@ -554,7 +567,7 @@ export const LearningPathPage = () => {
           <span
             style={{
               display: "block",
-              color: "#246B45",
+              color: "var(--cl-green-forest)",
               fontSize: 13,
               textTransform: "uppercase",
               letterSpacing: "0.06em",
@@ -568,7 +581,7 @@ export const LearningPathPage = () => {
             style={{
               fontSize: 24,
               fontWeight: 800,
-              color: "#18231D",
+              color: "var(--text-primary)",
               marginBottom: 12,
             }}
           >
@@ -577,7 +590,7 @@ export const LearningPathPage = () => {
           {learningPath.nextActivity.reason && (
             <p
               style={{
-                color: "#59665E",
+                color: "var(--text-secondary)",
                 fontSize: 15,
                 maxWidth: 640,
                 margin: "0 auto 24px",

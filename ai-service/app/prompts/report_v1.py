@@ -114,13 +114,14 @@ AT-RISK STUDENTS:
 
 RULES:
 
-1. Provide a concise class performance summary.
-2. Identify strong and weak topics for the class.
-3. For each at-risk student, explain why they need attention.
-4. Give actionable teaching recommendations.
-5. Use only the data provided.
-6. Return ONLY valid JSON.
-7. Do not use markdown.
+1. Provide a concise factual class performance summary grounded strictly in the provided data.
+2. Identify strong topics (>= 70%) and vulnerable topics (< 50%) directly from the provided data.
+3. For each at-risk student, preserve their name and actual reason without inventing facts.
+4. Give actionable teaching recommendations tailored specifically to the identified weak topics.
+5. AI must NOT invent student counts, percentages, topics, submissions, scores, or student names.
+6. Every numerical claim in the summary must be supported by the supplied data. If there is no activity, state that no student activity was recorded during this period.
+7. Return ONLY valid JSON.
+8. Do not use markdown.
 
 Return this exact structure:
 

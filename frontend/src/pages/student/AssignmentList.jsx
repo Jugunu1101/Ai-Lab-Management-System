@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Row, Col, Card, Input, Select, Tag, Button, Typography, Space } from "antd";
 import {
   SearchOutlined,
@@ -15,6 +15,7 @@ import LoadingSpinner from "../../components/shared/LoadingSpinner";
 import ErrorState from "../../components/shared/ErrorState";
 import EmptyState from "../../components/shared/EmptyState";
 import { Bot, User, XCircle, CheckCircle2, Play, Sparkles } from "lucide-react";
+import classService from "../../services/class.service";
 import { DIFFICULTY_CONFIG, PROGRAMMING_LANGUAGES } from "../../utils/constants";
 import { formatDate } from "../../utils/formatters";
 
@@ -31,31 +32,71 @@ export const AssignmentList = () => {
   );
   const [selectedDifficulty, setSelectedDifficulty] = useState("ALL");
   const [selectedLanguage, setSelectedLanguage] = useState("ALL");
+  const [selectedClassId, setSelectedClassId] = useState(
+    searchParams.get("classId") || "ALL"
+  );
+  const [enrolledClasses, setEnrolledClasses] = useState([]);
+
+  useEffect(() => {
+    const query = searchParams.get("topic") || searchParams.get("search");
+    if (query !== null) {
+      setSearchTerm(query);
+    }
+    const classIdFromUrl = searchParams.get("classId");
+    if (classIdFromUrl !== null) {
+      setSelectedClassId(classIdFromUrl);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    let isMounted = true;
+    Promise.resolve(classService.getClasses ? classService.getClasses() : [])
+      .then((res) => {
+        if (!isMounted) return;
+        const list = res?.data?.classes || res?.data || res || [];
+        setEnrolledClasses(Array.isArray(list) ? list : []);
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const displayedAssignments = assignments || [];
 
+  const cleanSearch = (searchTerm || "").trim().toLowerCase();
+
   const filtered = displayedAssignments.filter((item) => {
     const matchSearch =
-      item.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.topics &&
-        item.topics.some((t) =>
-          t.toLowerCase().includes(searchTerm.toLowerCase())
-        ));
+      !cleanSearch ||
+      item.title?.toLowerCase().includes(cleanSearch) ||
+      item.description?.toLowerCase().includes(cleanSearch) ||
+      item.problemStatement?.toLowerCase().includes(cleanSearch) ||
+      (Array.isArray(item.topics) &&
+        item.topics.some((t) => t?.toLowerCase().includes(cleanSearch))) ||
+      (typeof item.topic === "string" &&
+        item.topic.toLowerCase().includes(cleanSearch)) ||
+      item.programmingLanguage?.toLowerCase().includes(cleanSearch) ||
+      item.language?.toLowerCase().includes(cleanSearch);
 
     const matchDiff =
       selectedDifficulty === "ALL" || item.difficulty === selectedDifficulty;
     const matchLang =
       selectedLanguage === "ALL" ||
-      item.programmingLanguage?.toLowerCase() ===
-        selectedLanguage.toLowerCase() ||
+      item.programmingLanguage?.toLowerCase() === selectedLanguage.toLowerCase() ||
       item.language?.toLowerCase() === selectedLanguage.toLowerCase();
 
-    return matchSearch && matchDiff && matchLang;
+    const itemClassId = item.classId?._id || item.classId?.id || item.classId;
+    const matchClass =
+      selectedClassId === "ALL" ||
+      (itemClassId && itemClassId.toString() === selectedClassId.toString());
+
+    return matchSearch && matchDiff && matchLang && matchClass;
   });
 
-  const aiAssignments = filtered.filter((a) => a.source === "AI_AGENT");
-  const teacherAssignments = filtered.filter((a) => a.source !== "AI_AGENT");
+  const isAiAssignment = (a) => a.source === "AI_AGENT" || a.source === "AI_GENERATED";
+  const aiAssignments = filtered.filter(isAiAssignment);
+  const teacherAssignments = filtered.filter((a) => !isAiAssignment(a));
 
   const getDifficultyBadge = (difficulty) => {
     const diff = (difficulty || "MEDIUM").toUpperCase();
@@ -111,53 +152,65 @@ export const AssignmentList = () => {
   };
 
   const renderAssignmentCard = (assignment) => {
-    const isAi = assignment.source === "AI_AGENT";
+    const isAi = isAiAssignment(assignment);
+    const isAiAgent = assignment.source === "AI_AGENT";
+    const isAiGenerated = assignment.source === "AI_GENERATED";
     const primaryTopic = assignment.topics?.[0] || "Programming";
     const isCompleted = assignment.status === "COMPLETED" || assignment.passed;
     const isFailed = assignment.status === "FAILED";
 
     return (
-      <Col xs={24} md={12} xl={8} key={assignment._id}>
+      <div
+        key={assignment._id}
+        className="assignment-card-grid-item"
+      >
         <div
-          className="cl-card cl-card-hover"
+          className="cl-card cl-card-hover assignment-card"
           style={{
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            background: "#FFFFFF",
-            border: isAi ? "1.5px solid #246B45" : "1px solid #DDE5DC",
-            borderRadius: 20,
-            padding: 24,
-            boxShadow: "0 2px 8px rgba(18, 60, 42, 0.04)",
+            border: isAiAgent
+              ? "1.5px solid var(--cl-green-forest)"
+              : isAiGenerated
+              ? "1.5px solid #9333EA"
+              : "1px solid var(--border-color)",
           }}
         >
-          <div>
-            {/* Top Badges */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              {isAi ? (
+          {/* Card Content Top */}
+          <div className="assignment-card-content">
+            {/* Header Badges */}
+            <div className="assignment-card-header">
+              {isAiAgent ? (
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    background: "#EDF6EA",
+                    background: "var(--cl-green-light)",
                     padding: "4px 12px",
                     borderRadius: 20,
-                    border: "1px solid #246B45",
-                    color: "#123C2A",
+                    border: "1px solid var(--cl-green-forest)",
+                    color: "var(--cl-green-dark)",
                     fontSize: 13,
                     fontWeight: 700,
                   }}
                 >
-                  <Bot size={15} color="#246B45" /> 🤖 AI Recommended
+                  <Bot size={15} color="var(--cl-green-forest)" /> 🤖 AI Practice
+                </div>
+              ) : isAiGenerated ? (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background: "rgba(147, 51, 234, 0.15)",
+                    padding: "4px 12px",
+                    borderRadius: 20,
+                    border: "1px solid #9333EA",
+                    color: "var(--text-primary)",
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  <Sparkles size={15} color="#A855F7" /> ⚡ AI-Generated Assignment
                 </div>
               ) : (
                 <div
@@ -165,16 +218,23 @@ export const AssignmentList = () => {
                     display: "flex",
                     alignItems: "center",
                     gap: 6,
-                    background: "#F8F6EE",
+                    background: "var(--bg-tertiary)",
                     padding: "4px 12px",
                     borderRadius: 20,
-                    border: "1px solid #DDE5DC",
-                    color: "#59665E",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-secondary)",
                     fontSize: 13,
                     fontWeight: 600,
                   }}
                 >
-                  <User size={14} color="#59665E" /> Teacher Assignment
+                  <User size={14} color="var(--text-secondary)" />{" "}
+                  {assignment.classId?.name
+                    ? `${assignment.classId.name}${
+                        assignment.classId.code
+                          ? ` (${assignment.classId.code})`
+                          : ""
+                      }`
+                    : "Teacher Assignment"}
                 </div>
               )}
 
@@ -182,9 +242,9 @@ export const AssignmentList = () => {
                 {getDifficultyBadge(assignment.difficulty)}
                 <span
                   style={{
-                    background: "#EDF6EA",
-                    color: "#174832",
-                    border: "1px solid #DCEEDD",
+                    background: "var(--cl-green-light)",
+                    color: "var(--cl-green-dark)",
+                    border: "1px solid var(--border-subtle)",
                     borderRadius: 6,
                     padding: "3px 8px",
                     fontSize: 12,
@@ -199,72 +259,70 @@ export const AssignmentList = () => {
               </div>
             </div>
 
-            {/* Title */}
-            <h3
-              style={{
-                fontSize: 20,
-                fontWeight: 700,
-                marginBottom: 8,
-                color: "#18231D",
-                lineHeight: 1.35,
-              }}
-            >
-              {assignment.title}
-            </h3>
+            {/* Title Area */}
+            <div className="assignment-card-title-box">
+              <h3 title={assignment.title}>
+                {assignment.title}
+              </h3>
+            </div>
 
             {/* AI Specific Reasoning Note */}
             {isAi && (
               <div
+                className="assignment-card-ai-context"
                 style={{
-                  background: "#EDF6EA",
-                  border: "1px solid #DCEEDD",
-                  borderRadius: 10,
-                  padding: "10px 14px",
-                  marginBottom: 12,
-                  fontSize: 13,
-                  color: "#174832",
-                  lineHeight: 1.5,
+                  background: isAiAgent ? "var(--cl-green-light)" : "rgba(147, 51, 234, 0.12)",
+                  border: isAiAgent ? "1px solid var(--border-subtle)" : "1px solid rgba(147, 51, 234, 0.28)",
+                  color: isAiAgent ? "var(--cl-green-dark)" : "var(--text-primary)",
                 }}
               >
-                <strong>💡 Why this practice:</strong>{" "}
-                {assignment.agentReason ||
-                  "Created specifically to build your mastery in this weak topic."}
+                <span className="assignment-card-ai-icon" aria-hidden="true">
+                  {isAiAgent ? "💡" : "⚡"}
+                </span>
+                <div
+                  className="assignment-card-ai-text"
+                  title={
+                    assignment.agentReason ||
+                    (isAiAgent
+                      ? "Created specifically to build your mastery in this weak topic."
+                      : "AI-generated problem curated to strengthen programming concepts.")
+                  }
+                >
+                  <strong>{isAiAgent ? "Why this practice:" : "AI Practice:"}</strong>{" "}
+                  <span>
+                    {assignment.agentReason ||
+                      (isAiAgent
+                        ? "Created specifically to build your mastery in this weak topic."
+                        : "AI-generated problem curated to strengthen programming concepts.")}
+                  </span>
+                </div>
               </div>
             )}
 
             {/* Description Preview */}
-            <Paragraph
-              ellipsis={{ rows: 2 }}
-              style={{
-                fontSize: 14,
-                color: "#59665E",
-                marginBottom: 16,
-                lineHeight: 1.55,
-              }}
-            >
-              {assignment.description || "Solve coding exercise and test against unit test cases."}
-            </Paragraph>
+            <div className="assignment-card-desc-box">
+              <p title={assignment.description}>
+                {assignment.description || "Solve coding exercise and test against unit test cases."}
+              </p>
+            </div>
 
             {/* Metadata tags */}
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 6,
-                marginBottom: 16,
-              }}
-            >
+            <div className="assignment-card-topics-box">
               {(assignment.topics || [primaryTopic]).slice(0, 3).map((topic, i) => (
                 <span
                   key={i}
                   style={{
-                    background: "#F8F6EE",
-                    color: "#59665E",
-                    border: "1px solid #DDE5DC",
+                    background: "var(--bg-tertiary)",
+                    color: "var(--text-secondary)",
+                    border: "1px solid var(--border-subtle)",
                     borderRadius: 6,
                     padding: "2px 8px",
-                    fontSize: 12,
+                    fontSize: 11.5,
                     fontWeight: 500,
+                    height: 22,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    whiteSpace: "nowrap",
                   }}
                 >
                   #{topic}
@@ -273,129 +331,137 @@ export const AssignmentList = () => {
             </div>
           </div>
 
-          <div>
+          {/* Spacer */}
+          <div className="assignment-card-spacer" />
+
+          {/* Bottom Section */}
+          <div className="assignment-card-bottom">
             {/* Meta Row: Due date & Attempts */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                fontSize: 13,
-                color: "#748078",
-                paddingTop: 12,
-                borderTop: "1px solid #E8EFE7",
-                marginBottom: 16,
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <CalendarOutlined style={{ fontSize: 13 }} />
+            <div className="assignment-card-meta-row">
+              <span style={{ display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+                <CalendarOutlined style={{ fontSize: 12 }} />
                 Due: {assignment.deadline ? formatDate(assignment.deadline) : "Self-paced"}
               </span>
-              <span>
+              <span style={{ whiteSpace: "nowrap" }}>
                 Attempts: {assignment.attempts || 0}
                 {assignment.maxAttempts ? ` / ${assignment.maxAttempts}` : ""}
               </span>
             </div>
 
-            {/* Status & CTA Actions */}
-            {isCompleted ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* Status Area (Consistent reserved slot) */}
+            <div className="assignment-card-status-box">
+              {isCompleted ? (
                 <div
+                  className="assignment-status-completed"
                   style={{
+                    width: "100%",
+                    height: "100%",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    background: "#EDF6EA",
-                    border: "1px solid #DCEEDD",
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    boxSizing: "border-box",
                   }}
                 >
                   <span
                     style={{
-                      color: "#2F7D4A",
                       fontWeight: 700,
-                      fontSize: 14,
+                      fontSize: 12.5,
                       display: "flex",
                       alignItems: "center",
-                      gap: 6,
+                      gap: 5,
                     }}
                   >
-                    <CheckCircle2 size={16} /> Completed
+                    <CheckCircle2 size={14} /> Completed
                   </span>
-                  <span style={{ fontWeight: 800, color: "#2F7D4A", fontSize: 14 }}>
+                  <span style={{ fontWeight: 800, fontSize: 13 }}>
                     Score: {assignment.score || 100}%
                   </span>
                 </div>
+              ) : isFailed ? (
+                <div
+                  className="assignment-status-failed"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "0 12px",
+                    borderRadius: 8,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 12.5,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 5,
+                    }}
+                  >
+                    <XCircle size={14} /> Needs Practice
+                  </span>
+                  <span style={{ fontWeight: 800, fontSize: 13 }}>
+                    Score: {assignment.score || 0}%
+                  </span>
+                </div>
+              ) : (
+                /* Reserved empty status slot for incomplete assignments */
+                <div style={{ width: "100%", height: "100%" }} aria-hidden="true" />
+              )}
+            </div>
+
+            {/* Action Button */}
+            <div className="assignment-card-action-box">
+              {isCompleted ? (
                 <Button
                   className="cl-btn-secondary"
-                  style={{ width: "100%", height: 44 }}
                   onClick={() =>
                     navigate(`/student/assignments/${assignment._id}`)
                   }
                 >
                   View Submission
                 </Button>
-              </div>
-            ) : isFailed ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "10px 14px",
-                    borderRadius: 10,
-                    background: "#FDF1F1",
-                    border: "1px solid #F8D7D7",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#C83C3C",
-                      fontWeight: 700,
-                      fontSize: 14,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <XCircle size={16} /> Needs Practice
-                  </span>
-                  <span style={{ fontWeight: 800, color: "#C83C3C", fontSize: 14 }}>
-                    Score: {assignment.score || 0}%
-                  </span>
-                </div>
+              ) : isFailed ? (
                 <Button
                   className={isAi ? "cl-btn-accent" : "cl-btn-primary"}
-                  style={{ width: "100%", height: 44 }}
+                  style={{
+                    background: isAiGenerated ? "#7E22CE" : undefined,
+                    borderColor: isAiGenerated ? "#7E22CE" : undefined,
+                  }}
                   onClick={() =>
                     navigate(`/student/assignments/${assignment._id}`)
                   }
                 >
                   {isAi ? "Retry AI Practice" : "Retry Problem"}
                 </Button>
-              </div>
-            ) : (
-              <Button
-                className={isAi ? "cl-btn-accent" : "cl-btn-primary"}
-                style={{ width: "100%", height: 46 }}
-                onClick={() =>
-                  navigate(`/student/assignments/${assignment._id}`)
-                }
-              >
-                {isAi
-                  ? assignment.status === "IN_PROGRESS"
-                    ? "Continue AI Practice"
-                    : "Start AI Practice"
-                  : assignment.status === "IN_PROGRESS"
-                  ? "Continue Problem"
-                  : "Start Problem"}
-              </Button>
-            )}
+              ) : (
+                <Button
+                  className={isAi ? "cl-btn-accent" : "cl-btn-primary"}
+                  style={{
+                    background: isAiGenerated ? "#7E22CE" : undefined,
+                    borderColor: isAiGenerated ? "#7E22CE" : undefined,
+                  }}
+                  onClick={() =>
+                    navigate(`/student/assignments/${assignment._id}`)
+                  }
+                >
+                  {isAi
+                    ? assignment.status === "IN_PROGRESS"
+                      ? (isAiAgent ? "Continue AI Practice" : "Continue AI Assignment")
+                      : (isAiAgent ? "Start AI Practice" : "Start AI Assignment")
+                    : assignment.status === "IN_PROGRESS"
+                    ? "Continue Problem"
+                    : "Start Problem"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
-      </Col>
+      </div>
     );
   };
 
@@ -415,12 +481,12 @@ export const AssignmentList = () => {
         style={{
           padding: "18px 24px",
           marginBottom: 32,
-          background: "#FFFFFF",
+          background: "var(--bg-card)",
           borderRadius: 16,
         }}
       >
         <Row gutter={[16, 12]} align="middle">
-          <Col xs={24} md={10}>
+          <Col xs={24} md={8}>
             <Input
               prefix={<SearchOutlined style={{ color: "var(--cl-text-muted)", fontSize: 16 }} />}
               placeholder="Search problems by name, topic, or concept..."
@@ -436,7 +502,23 @@ export const AssignmentList = () => {
             />
           </Col>
 
-          <Col xs={12} md={7}>
+          <Col xs={24} sm={12} md={6}>
+            <Select
+              value={selectedClassId}
+              onChange={setSelectedClassId}
+              style={{ width: "100%", height: 46 }}
+              placeholder="All Enrolled Classes"
+            >
+              <Option value="ALL">All Enrolled Classes</Option>
+              {enrolledClasses.map((c) => (
+                <Option key={c._id || c.id} value={c._id || c.id}>
+                  {c.name} {c.code ? `(${c.code})` : ""}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+
+          <Col xs={12} sm={6} md={5}>
             <Select
               value={selectedDifficulty}
               onChange={setSelectedDifficulty}
@@ -449,7 +531,7 @@ export const AssignmentList = () => {
             </Select>
           </Col>
 
-          <Col xs={12} md={7}>
+          <Col xs={12} sm={6} md={5}>
             <Select
               value={selectedLanguage}
               onChange={setSelectedLanguage}
@@ -480,11 +562,12 @@ export const AssignmentList = () => {
             setSearchTerm("");
             setSelectedDifficulty("ALL");
             setSelectedLanguage("ALL");
+            setSelectedClassId("ALL");
           }}
         />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
-          {/* 1. AI Recommended Practice Section */}
+          {/* 1. AI Practice & Generated Assignments Section */}
           {aiAssignments.length > 0 && (
             <div>
               <div
@@ -497,14 +580,14 @@ export const AssignmentList = () => {
               >
                 <div
                   style={{
-                    background: "#EDF6EA",
-                    border: "1px solid #246B45",
+                    background: "var(--cl-green-light)",
+                    border: "1px solid var(--cl-green-forest)",
                     padding: 8,
                     borderRadius: 12,
                     display: "flex",
                   }}
                 >
-                  <Bot size={22} color="#123C2A" />
+                  <Bot size={22} color="var(--cl-green-forest)" />
                 </div>
                 <div>
                   <h2
@@ -512,28 +595,28 @@ export const AssignmentList = () => {
                       fontSize: 22,
                       fontWeight: 700,
                       margin: 0,
-                      color: "#18231D",
+                      color: "var(--text-primary)",
                     }}
                   >
-                    🤖 AI Recommended Practice
+                    🤖 AI Practice & Generated Assignments
                   </h2>
                   <p
                     style={{
-                      color: "#59665E",
+                      color: "var(--text-secondary)",
                       fontSize: 14,
                       margin: "4px 0 0 0",
                     }}
                   >
-                    Personalized coding problems generated specifically to strengthen your weak topics.
+                    Personalized practice tasks and AI-generated assignments tailored to build concept mastery.
                   </p>
                 </div>
               </div>
 
-              <Row gutter={[20, 20]}>
+              <div className="classroom-assignments-grid">
                 {aiAssignments.map((assignment) =>
                   renderAssignmentCard(assignment)
                 )}
-              </Row>
+              </div>
             </div>
           )}
 
@@ -549,14 +632,14 @@ export const AssignmentList = () => {
             >
               <div
                 style={{
-                  background: "#F8F6EE",
-                  border: "1px solid #DDE5DC",
+                  background: "var(--bg-tertiary)",
+                  border: "1px solid var(--border-subtle)",
                   padding: 8,
                   borderRadius: 12,
                   display: "flex",
                 }}
               >
-                <User size={20} color="#123C2A" />
+                <User size={20} color="var(--cl-green-forest)" />
               </div>
               <div>
                 <h2
@@ -564,14 +647,14 @@ export const AssignmentList = () => {
                     fontSize: 22,
                     fontWeight: 700,
                     margin: 0,
-                    color: "#18231D",
+                    color: "var(--text-primary)",
                   }}
                 >
                   Classroom Assignments
                 </h2>
                 <p
                   style={{
-                    color: "#59665E",
+                    color: "var(--text-secondary)",
                     fontSize: 14,
                     margin: "4px 0 0 0",
                   }}
@@ -582,20 +665,20 @@ export const AssignmentList = () => {
             </div>
 
             {teacherAssignments.length > 0 ? (
-              <Row gutter={[20, 20]}>
+              <div className="classroom-assignments-grid">
                 {teacherAssignments.map((assignment) =>
                   renderAssignmentCard(assignment)
                 )}
-              </Row>
+              </div>
             ) : (
               <div
                 style={{
-                  background: "#FFFFFF",
-                  border: "1px dashed #DDE5DC",
+                  background: "var(--bg-card)",
+                  border: "1px dashed var(--border-color)",
                   borderRadius: 16,
                   padding: "36px 24px",
                   textAlign: "center",
-                  color: "#59665E",
+                  color: "var(--text-secondary)",
                   fontSize: 15,
                 }}
               >

@@ -9,13 +9,14 @@ export const submissionService = {
     );
   },
 
-  runTests: async ({ assignmentId, code, language }) => {
+  runTests: async ({ assignmentId, code, language, testCases }) => {
     return api.post(
       "/submissions/run",
-      { assignmentId, code, language },
+      { assignmentId, code, language, testCases },
       { timeout: 60000 }
     );
   },
+
 
   getSubmissions: async (params = {}) => {
     return api.get("/submissions", { params });

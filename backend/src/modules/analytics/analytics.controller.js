@@ -20,6 +20,7 @@ const getClassAnalytics = async (req, res, next) => {
     const analytics = await analyticsService.getClassAnalytics({
       classId: req.params.classId,
       teacherId: req.user.userId,
+      role: req.user.role,
     });
 
     return res.status(200).json({
@@ -36,6 +37,7 @@ const getClassTopicAnalytics = async (req, res, next) => {
     const analytics = await analyticsService.getClassTopicAnalytics({
       classId: req.params.classId,
       teacherId: req.user.userId,
+      role: req.user.role,
     });
 
     return res.status(200).json({
@@ -80,10 +82,28 @@ const getStudentProfileById = async (req, res, next) => {
   }
 };
 
+const getTeacherDashboard = async (req, res, next) => {
+  try {
+    const dashboard = await analyticsService.getTeacherDashboard({
+      teacherId: req.user.userId || req.user.id,
+      role: req.user.role,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: dashboard,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getStudentAnalytics,
   getClassAnalytics,
   getClassTopicAnalytics,
   getStudentAnalyticsById,
   getStudentProfileById,
+  getTeacherDashboard,
 };
+

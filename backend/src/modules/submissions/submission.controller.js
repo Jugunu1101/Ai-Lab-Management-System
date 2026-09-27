@@ -32,7 +32,7 @@ const createSubmission = async (req, res, next) => {
 
     const result = await submissionService.executeSubmission({
       submissionId: submission._id,
-      skipAI: true,
+      skipAI: false,
     });
 
     if (isRedisUp) {
@@ -57,6 +57,7 @@ const runPublicTests = async (req, res, next) => {
       code: req.body.code,
       language: req.body.language,
       userId: req.user.userId,
+      testCases: req.body.testCases,
     });
 
     return res.status(200).json({
@@ -89,6 +90,7 @@ const getSubmissionById = async (req, res, next) => {
     const submission = await submissionService.getSubmissionById({
       submissionId: req.params.submissionId,
       userId: req.user.userId,
+      userRole: req.user.role,
     });
 
     return res.status(200).json({
