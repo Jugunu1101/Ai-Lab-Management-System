@@ -110,8 +110,9 @@ const handleHealthCheck = (req, res) => {
   });
 };
 
-app.get("/health", handleHealthCheck);
-app.get("/api/health", handleHealthCheck);
+app.all("/", handleHealthCheck);
+app.all("/health", handleHealthCheck);
+app.all("/api/health", handleHealthCheck);
 
 
 // API Routes

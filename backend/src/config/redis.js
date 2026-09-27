@@ -6,6 +6,7 @@ const getRedisOptions = () => {
   const options = {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
+    showFriendlyErrorStack: false,
     retryStrategy: (times) => {
       if (times > 3) return null;
       return Math.min(times * 1000, 3000);
@@ -31,7 +32,7 @@ const getRedisConnection = () => {
   });
 
   connection.on("error", (error) => {
-    console.error("Redis connection error:", error.message);
+    // Handled to prevent unhandled node event errors
   });
 
   return connection;
@@ -56,6 +57,13 @@ const checkRedisAvailability = async () => {
     maxRetriesPerRequest: 1,
     retryStrategy: () => null,
     lazyConnect: true,
+    enableOfflineQueue: false,
+    showFriendlyErrorStack: false,
+  });
+
+  // Attach error handler BEFORE connecting to prevent unhandled 'error' event emissions
+  probe.on("error", () => {
+    // Handled gracefully for availability probes
   });
 
   try {
@@ -64,7 +72,9 @@ const checkRedisAvailability = async () => {
     await probe.quit();
     return true;
   } catch (err) {
-    probe.disconnect();
+    try {
+      probe.disconnect();
+    } catch (_) {}
     return false;
   }
 };
