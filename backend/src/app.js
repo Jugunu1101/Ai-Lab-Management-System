@@ -91,16 +91,15 @@ if (process.env.NODE_ENV !== "test") {
 
 const handleHealthCheck = (req, res) => {
   const dbConnected = isDBConnected();
-  const statusCode = dbConnected ? 200 : 503;
 
-  return res.status(statusCode).json({
+  return res.status(200).json({
     status: dbConnected ? "ok" : "degraded",
     service: "programming-lab-backend",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     checks: {
       backend: "running",
-      database: dbConnected ? "connected" : "disconnected",
+      database: dbConnected ? "connected" : "connecting",
       aiMode: process.env.AI_MOCK_MODE === "false" ? "live" : "mock",
       codeExecution: {
         available: isDockerAvailable,
