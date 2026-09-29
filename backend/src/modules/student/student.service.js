@@ -486,46 +486,78 @@ const getStudentLearningPath = async ({ studentId, language }) => {
   let activeStepTopic = null;
   let activeStepProg = null;
 
+  const CURRICULUM_ORDER = [
+    "basics",
+    "syntax",
+    "variables",
+    "conditionals",
+    "logic",
+    "loops",
+    "arrays",
+    "functions",
+    "recursion",
+  ];
+
+  const getTopicOrder = (topic) => {
+    const idx = CURRICULUM_ORDER.indexOf(topic.toLowerCase());
+    return idx >= 0 ? idx : 99;
+  };
+
   if (Array.isArray(aiResult.steps)) {
-    // If progress has topics not present in aiResult.steps, ensure all student's known topics are reflected
+    // 1. Ensure all progress records exist in steps
     const existingTopics = new Set(aiResult.steps.map((s) => s.topic.toLowerCase()));
     for (const prog of progressRecords) {
       if (!existingTopics.has(prog.topic.toLowerCase())) {
-        const newStep = {
+        aiResult.steps.push({
           step: aiResult.steps.length + 1,
           topic: prog.topic,
           priority: prog.masteryScore < 60 ? "HIGH" : "LOW",
           estimatedTime: "30m",
           objective: `Master core principles and common patterns for ${prog.topic}.`,
           suggestedActivity: `Solve targeted practice problems and quizzes on ${prog.topic}.`,
-          status: "PENDING",
-        };
-        if (prog.masteryScore < 60) {
-          aiResult.steps.unshift(newStep);
-        } else {
-          aiResult.steps.push(newStep);
-        }
+          status: prog.masteryScore >= 60 ? "COMPLETED" : "PENDING",
+          masteryScore: prog.masteryScore,
+        });
         existingTopics.add(prog.topic.toLowerCase());
       }
     }
 
-    aiResult.steps = aiResult.steps.map((step, idx) => {
+    // 2. Attach mastery scores and determine status
+    aiResult.steps = aiResult.steps.map((step) => {
       const prog = progressRecords.find(
         (p) => p.topic.toLowerCase() === step.topic.toLowerCase()
       );
-      const score = prog ? prog.masteryScore : 0;
+      const score = prog ? prog.masteryScore : (step.masteryScore || 0);
       step.masteryScore = score;
-      step.step = idx + 1;
-
       if (score >= 60) {
         step.status = "COMPLETED";
-      } else if (!inProgressFound) {
-        step.status = "IN_PROGRESS";
-        inProgressFound = true;
-        activeStepTopic = step.topic;
-        activeStepProg = prog;
-      } else {
-        step.status = "PENDING";
+      }
+      return step;
+    });
+
+    // 3. Sort steps logically: COMPLETED first (by curriculum order), then IN_PROGRESS / PENDING (by curriculum order)
+    aiResult.steps.sort((a, b) => {
+      const aCompleted = a.status === "COMPLETED";
+      const bCompleted = b.status === "COMPLETED";
+      if (aCompleted && !bCompleted) return -1;
+      if (!aCompleted && bCompleted) return 1;
+      return getTopicOrder(a.topic) - getTopicOrder(b.topic);
+    });
+
+    // 4. Assign IN_PROGRESS to the first unmastered step and PENDING to subsequent
+    aiResult.steps = aiResult.steps.map((step, idx) => {
+      step.step = idx + 1;
+      if (step.status !== "COMPLETED") {
+        if (!inProgressFound) {
+          step.status = "IN_PROGRESS";
+          inProgressFound = true;
+          activeStepTopic = step.topic;
+          activeStepProg = progressRecords.find(
+            (p) => p.topic.toLowerCase() === step.topic.toLowerCase()
+          );
+        } else {
+          step.status = "PENDING";
+        }
       }
       return step;
     });

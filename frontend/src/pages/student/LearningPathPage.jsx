@@ -40,8 +40,9 @@ export const LearningPathPage = () => {
           pathRes.value.learningPath ||
           pathRes.value.data ||
           pathRes.value;
-        if (pathData && pathData.steps && pathData.steps.length > 0) {
-          setLearningPath(pathData);
+        const steps = pathData?.path || pathData?.steps || (Array.isArray(pathData) ? pathData : []);
+        if (pathData && (steps.length > 0 || pathData.title || pathData.language)) {
+          setLearningPath(pathData.steps ? pathData : { ...pathData, steps });
         } else {
           setError(
             "No learning path available yet. Complete some assignments and quizzes to generate your personalized path."
@@ -258,17 +259,34 @@ export const LearningPathPage = () => {
           />
 
           {learningPath?.steps?.map((step, index) => {
+            const isCompleted =
+              step.status === "COMPLETED" || (step.masteryScore || 0) >= 60;
+            const isCurrent =
+              !isCompleted &&
+              (step.status === "IN_PROGRESS" ||
+                index === currentStepIndex ||
+                (learningPath?.targetFocus &&
+                  learningPath.targetFocus.map((f) => f.toLowerCase()).includes(step.topic.toLowerCase())));
+
             let state = "locked";
-            if (step.status === "COMPLETED" || (currentStepIndex >= 0 && index < currentStepIndex)) {
+            if (isCompleted) {
               state = "completed";
-            } else if (step.status === "IN_PROGRESS" || index === currentStepIndex) {
+            } else if (isCurrent) {
               state = "current";
             } else {
-              state = "locked";
+              const previousCompleted =
+                index === 0 ||
+                learningPath.steps
+                  .slice(0, index)
+                  .every((s) => s.status === "COMPLETED" || (s.masteryScore || 0) >= 60);
+              state = previousCompleted || (currentStepIndex >= 0 && index <= currentStepIndex + 1)
+                ? "unlocked"
+                : "locked";
             }
 
-            const isCurrent = state === "current";
-            const isCompleted = state === "completed";
+            const isCurrentState = state === "current";
+            const isCompletedState = state === "completed";
+            const isUnlockedState = state === "unlocked";
 
             return (
               <div
@@ -283,7 +301,7 @@ export const LearningPathPage = () => {
               >
                 {/* Step Icon */}
                 <div style={{ position: "relative", zIndex: 2, marginTop: 4 }}>
-                  {isCompleted ? (
+                  {isCompletedState ? (
                     <div
                       style={{
                         width: 28,
@@ -298,7 +316,7 @@ export const LearningPathPage = () => {
                     >
                       <CheckCircle2 size={18} strokeWidth={2.5} />
                     </div>
-                  ) : isCurrent ? (
+                  ) : isCurrentState ? (
                     <div
                       style={{
                         width: 28,
@@ -313,6 +331,22 @@ export const LearningPathPage = () => {
                       }}
                     >
                       <ArrowRight size={16} strokeWidth={3} />
+                    </div>
+                  ) : isUnlockedState ? (
+                    <div
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: "50%",
+                        background: "var(--bg-tertiary)",
+                        border: "2px solid var(--primary)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--primary)",
+                      }}
+                    >
+                      <BookOpen size={14} />
                     </div>
                   ) : (
                     <div
@@ -337,13 +371,13 @@ export const LearningPathPage = () => {
                 <div
                   style={{
                     flex: 1,
-                    background: isCurrent ? "var(--bg-tertiary)" : "var(--bg-card)",
-                    border: isCurrent
+                    background: isCurrentState ? "var(--bg-tertiary)" : "var(--bg-card)",
+                    border: isCurrentState
                       ? "1.5px solid var(--cl-green-forest)"
                       : "1px solid var(--border-color)",
                     borderRadius: 16,
                     padding: "20px 24px",
-                    boxShadow: isCurrent
+                    boxShadow: isCurrentState
                       ? "var(--shadow-md)"
                       : "none",
                   }}
@@ -363,9 +397,7 @@ export const LearningPathPage = () => {
                         margin: 0,
                         fontSize: 19,
                         fontWeight: 700,
-                        color: isCurrent
-                          ? "var(--text-primary)"
-                          : isCompleted
+                        color: isCurrentState || isCompletedState
                           ? "var(--text-primary)"
                           : "var(--text-secondary)",
                       }}
@@ -373,7 +405,7 @@ export const LearningPathPage = () => {
                       {index + 1}. {step.topic}
                     </h3>
 
-                    {isCurrent && (
+                    {isCurrentState && (
                       <span
                         style={{
                           background: "var(--primary)",
@@ -387,7 +419,7 @@ export const LearningPathPage = () => {
                         Current Step
                       </span>
                     )}
-                    {isCompleted && (
+                    {isCompletedState && (
                       <span
                         style={{
                           background: "var(--bg-tertiary)",
@@ -399,7 +431,22 @@ export const LearningPathPage = () => {
                           fontWeight: 700,
                         }}
                       >
-                        Completed
+                        Completed ({step.masteryScore || 100}%)
+                      </span>
+                    )}
+                    {isUnlockedState && (
+                      <span
+                        style={{
+                          background: "var(--bg-tertiary)",
+                          color: "var(--primary)",
+                          border: "1px solid var(--border-color)",
+                          padding: "3px 12px",
+                          borderRadius: 8,
+                          fontSize: 13,
+                          fontWeight: 600,
+                        }}
+                      >
+                        Available
                       </span>
                     )}
                     {state === "locked" && (

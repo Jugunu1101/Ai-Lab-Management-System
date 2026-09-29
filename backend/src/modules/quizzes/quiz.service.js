@@ -180,10 +180,26 @@ const validateQuestionLanguage = (question, requestedLanguage) => {
 };
 
 const TOPIC_VALIDATORS = {
+  variables: (text) => {
+    // 1. MUST REJECT heavy cross-topic concepts:
+    // - Array traversal / sorting / binary search / array time complexity
+    // - Standalone recursive call tracing
+    const crossTopicRejects = /\b(time\s+complexity\s+of\s+traversing|binary\s+search|linear\s+search|base\s+case|recursive|call\s+stack|bubble\s+sort|quick\s+sort|merge\s+sort)\b/i;
+    if (crossTopicRejects.test(text)) {
+      return false;
+    }
+    // 2. MUST contain variable concept indicators:
+    const varRegex = /\b(variable|variables|declare|declaring|declaration|initialize|initialized|initialization|assign|assigning|assignment|reassign|reassigned|data\s+type|data\s+types|datatype|datatypes|const\b|constant|constants|final\b|static_cast|typecast|typecasting|type\s+conversion|scope|shadowing|identifier|primitive|int\b|float\b|double\b|char\b|bool\b|boolean\b|string\b|let\b|var\b|val\b|value\s+assigned|value\s+of|value\s+will|contain|store|storing)\b/i;
+    return varRegex.test(text);
+  },
+  conditionals: (text) => {
+    const crossTopicRejects = /\b(base\s+case|recursive|call\s+stack)\b/i;
+    if (crossTopicRejects.test(text)) return false;
+    const condRegex = /\b(if\b|if-else|else\s+if|elif\b|switch\b|case\b|ternary|\?\s*:|conditional|conditions?|branch|branches|else\b)\b/i;
+    return condRegex.test(text);
+  },
   loops: (text) => {
-    // Must contain meaningful loop construct / keyword
-    const loopRegex = /\b(for\s+|while\s+|range\s*\(|break\b|continue\b|iterat|nested\s+loop|loop|loops|looping|enumerate\s*\(|zip\s*\()/i;
-    // Standalone arithmetic questions without any loop construct are rejected
+    const loopRegex = /\b(for\s*\(|for\s+\w+\s+in|while\s*\(|do\s*\{|range\s*\(|break\b|continue\b|iterat|nested\s+loop|loop|loops|looping|enumerate\s*\(|zip\s*\(|counter)\b/i;
     const standaloneArithmeticRegex = /what\s+is\s+the\s+output\s+of\s+(the\s+)?arithmetic\s+expression/i;
     if (standaloneArithmeticRegex.test(text) && !loopRegex.test(text)) {
       return false;
@@ -191,19 +207,19 @@ const TOPIC_VALIDATORS = {
     return loopRegex.test(text);
   },
   arrays: (text) => {
-    return /\b(array|arrays|list|lists|index|indexing|slice|slicing|append|pop|insert|reverse|extend|len\s*\(|element|elements|subscript|vector)\b|\[\s*[\d'"]*[\w\s,]*\]/i.test(text);
+    return /\b(array|arrays|list|lists|index|indexing|slice|slicing|append|pop|push_back|insert|reverse|extend|len\s*\(|element|elements|subscript|vector|vectors|matrix|1d|2d)\b|\[\s*[\d'"]*[\w\s,]*\]/i.test(text);
   },
   recursion: (text) => {
-    return /\b(recurs|recursive|recursively|recursion|base\s+case|call\s+stack|recursionerror|depth|calls\s+itself)\b/i.test(text);
+    return /\b(recurs|recursive|recursively|recursion|base\s+case|call\s+stack|recursionerror|depth|calls?\s+itself|factorial|fibonacci)\b|([a-zA-Z_]\w*)\s*\([^)]*\)\s*\{[\s\S]*?\b\2\s*\(/i.test(text) || /\b([a-zA-Z_]\w*)\s*\(.*?\b\1\s*\(/i.test(text);
   },
   searching: (text) => {
     return /\b(search|searching|binary\s+search|linear\s+search|sorted\s+array|target|comparisons?)\b/i.test(text);
   },
   logic: (text) => {
-    return /\b(bool|boolean|true|false|and|or|not|conditional|if|else|elif|ternary|comparison|truthy|falsy|!=|==|<=|>=)\b/i.test(text);
+    return /\b(bool|boolean|true|false|and|or|not|conditional|if|else|elif|ternary|comparison|truthy|falsy|!=|==|<=|>=|&&|\|\|)\b/i.test(text);
   },
   syntax: (text) => {
-    return /\b(def\b|return|lambda|function|parameter|argument|indent|indentation|try|except|finally|raise|import|scope|global|nonlocal|pass\b|docstring|comment|syntax|colon|keyword)\b/i.test(text);
+    return /\b(def\b|return|lambda|function|parameter|argument|indent|indentation|try|except|finally|raise|import|scope|global|nonlocal|pass\b|docstring|comment|syntax|colon|keyword|semicolon|braces|compiler\s+error)\b/i.test(text);
   },
   basics: (text) => {
     return /\b(type|data\s+type|float|int|str|integer|string|modulo|division|operator|variable|precedence|len|isinstance|none|cast|casting|immutable|mutable|print\s*\(|std::|printf|System\.out)/i.test(text);
@@ -222,25 +238,16 @@ const validateQuestionTopic = (question, requestedTopics) => {
 
   if (topics.length === 0) return true;
 
-  // 1. Direct topic metadata match
-  if (question.topic) {
-    const qTopic = question.topic.toLowerCase().trim();
-    if (topics.some((t) => qTopic === t || qTopic.includes(t) || t.includes(qTopic))) {
-      return true;
-    }
-  }
-
-  // 2. Build combined text to analyze: question + options + explanation
   const optionsText = Array.isArray(question.options) ? question.options.join(" ") : "";
   const combinedText = `${question.question} ${optionsText} ${question.explanation || ""}`;
 
-  // Check if it satisfies ANY of the requested topics
+  // Check if question content satisfies ANY of the requested topics
   return topics.some((topicKey) => {
     const validator = TOPIC_VALIDATORS[topicKey];
     if (validator) {
       return validator(combinedText);
     }
-    // Fallback for custom topic names: check if topic name or word is mentioned in question
+    // Fallback for custom topic names
     const fallbackRegex = new RegExp(`\\b${topicKey}\\b`, "i");
     return fallbackRegex.test(combinedText);
   });
@@ -358,84 +365,343 @@ const generateUniqueQuizQuestions = async ({
     }
   }
 
-const generateFallbackQuizQuestions = (topics, language, neededCount, startIndex = 0) => {
-  const langUpper = (language || "cpp").toUpperCase();
-  const primaryTopic = topics && topics.length > 0 ? topics[0] : "loops";
-  
-  const questionTemplates = [
+const FALLBACK_TOPIC_BANKS = {
+  variables: (langUpper) => [
     {
-      q: `What is the time complexity of traversing an array of size N in ${langUpper}?`,
-      opts: ["O(1)", "O(N)", "O(N^2)", "O(log N)"],
-      ans: "B",
-      exp: "A linear scan through N elements requires visiting each element once, which is O(N) time."
+      q: `What is the value of variable x after: int x = 10; x = x + 5; in ${langUpper}?`,
+      opts: ["15", "10", "5", "Compiler error"],
+      ans: "A",
+      exp: "x is initialized to 10. The assignment x = x + 5 evaluates 10 + 5 = 15."
     },
     {
+      q: `Which keyword is used to declare a read-only variable whose value cannot be reassigned in ${langUpper}?`,
+      opts: [langUpper === "PYTHON" ? "ALL_CAPS naming convention" : (langUpper === "JAVA" ? "final" : "const"), "static", "var", "volatile"],
+      ans: "A",
+      exp: `In ${langUpper}, immutable variable declarations use ${langUpper === "PYTHON" ? "naming conventions" : (langUpper === "JAVA" ? "final" : "const")}.`
+    },
+    {
+      q: `What is the key difference between variable declaration and variable initialization?`,
+      opts: ["Declaration specifies name and type; initialization assigns an initial value", "Declaration allocates heap memory; initialization compiles code", "Declaration runs at runtime; initialization runs at compile time", "They are identical terms"],
+      ans: "A",
+      exp: "Declaration introduces an identifier to the compiler; initialization provides its first value."
+    },
+    {
+      q: `In ${langUpper}, what happens when a variable is declared inside a function block?`,
+      opts: ["It has local scope and is accessible only within that block", "It becomes a global variable accessible everywhere", "It is stored permanently on disk", "It triggers a runtime exception"],
+      ans: "A",
+      exp: "Variables defined inside a block have local scope and exist only within that block."
+    },
+    {
+      q: `What is explicit variable type casting in programming?`,
+      opts: ["Converting a variable from one data type to another explicitly", "Renaming a variable at runtime", "Deleting a variable from memory", "Exporting a variable to a file"],
+      ans: "A",
+      exp: "Type casting converts an expression of one type into another desired target type."
+    },
+    {
+      q: `Which data type is appropriate for storing a decimal number with fractional parts in ${langUpper}?`,
+      opts: [langUpper === "PYTHON" ? "float" : "double", "int", "char", "bool"],
+      ans: "A",
+      exp: "Floating-point data types (float/double) represent real numbers with fractional components."
+    },
+    {
+      q: `What is variable scope?`,
+      opts: ["The region of code where a variable is visible and accessible", "The memory size of a variable in bytes", "The speed at which a variable is updated", "The total number of variables in a file"],
+      ans: "A",
+      exp: "Scope determines the lifetime and visibility boundary of a variable name."
+    },
+    {
+      q: `What happens when you assign a new value to an existing mutable variable in ${langUpper}?`,
+      opts: ["The variable's stored value is updated to the new value", "A new variable is created with a different name", "The process crashes immediately", "The old value is appended to the new value"],
+      ans: "A",
+      exp: "Reassigning a variable replaces its previously held value with the new value."
+    },
+    {
+      q: `In ${langUpper}, which of the following is a valid variable identifier naming rule?`,
+      opts: ["Identifiers can contain letters, digits, and underscores, but cannot start with a digit", "Identifiers must start with a digit", "Identifiers can contain spaces", "Identifiers cannot contain underscores"],
+      ans: "A",
+      exp: "Standard programming syntax forbids variable names starting with numeric digits."
+    },
+    {
+      q: `What is uninitialized memory when declaring a primitive variable without assigning a value in languages like C/C++?`,
+      opts: ["The variable contains garbage data present in that memory location", "The variable is automatically set to 0", "The variable is set to infinity", "The memory is freed immediately"],
+      ans: "A",
+      exp: "Uninitialized local variables in C/C++ contain indeterminate garbage memory contents."
+    }
+  ],
+  conditionals: (langUpper) => [
+    {
+      q: `In ${langUpper}, which statement allows executing code based on boolean condition evaluation?`,
+      opts: ["if statement", "for loop", "while loop", "import statement"],
+      ans: "A",
+      exp: "An if statement executes its block if the condition evaluates to true."
+    },
+    {
+      q: `What is the ternary operator syntax in ${langUpper}?`,
+      opts: ["condition ? exprIfTrue : exprIfFalse", "if condition then expr1 else expr2", "condition -> expr1 : expr2", "eval(condition, expr1, expr2)"],
+      ans: "A",
+      exp: "The ternary operator ? : evaluates a condition and returns one of two expressions."
+    },
+    {
+      q: `What happens in an if-else structure when the condition is false?`,
+      opts: ["The else block executes", "The if block executes", "The program crashes", "The code loops infinitely"],
+      ans: "A",
+      exp: "When an if condition evaluates to false, control shifts to the else branch."
+    },
+    {
+      q: `In a multi-branch if / else-if / else chain, when is an else-if condition evaluated?`,
+      opts: ["Only when all preceding conditions in the chain evaluate to false", "Before the first if condition", "Simultaneously with all other branches", "After the else block finishes"],
+      ans: "A",
+      exp: "Conditionals evaluate sequentially until the first true condition is encountered."
+    },
+    {
+      q: `Which keyword is used for multi-way branching against discrete integer or character values in ${langUpper}?`,
+      opts: [langUpper === "PYTHON" ? "match-case / if-elif" : "switch", "while", "for", "goto"],
+      ans: "A",
+      exp: "Switch or match-case statements branch execution based on matching discrete value cases."
+    },
+    {
+      q: `What is the output of: int score = 85; if (score >= 90) print("A"); else if (score >= 80) print("B"); else print("C"); in ${langUpper}?`,
+      opts: ["B", "A", "C", "AB"],
+      ans: "A",
+      exp: "score 85 fails >= 90 but matches >= 80, outputting B."
+    },
+    {
+      q: `What happens if a switch case in C/C++/Java omits a break statement?`,
+      opts: ["Execution falls through to subsequent case statements", "The program throws a syntax error", "The switch statement restarts from case 1", "The computer reboots"],
+      ans: "A",
+      exp: "Without a break statement, execution falls through sequentially into the next case body."
+    },
+    {
+      q: `What is nested conditional execution?`,
+      opts: ["An if or else statement placed inside the body of another conditional statement", "A loop inside an array", "A function returning a boolean", "A comment inside a conditional"],
+      ans: "A",
+      exp: "Nested conditionals test secondary conditions within an outer branch."
+    },
+    {
+      q: `What boolean value does a comparison expression like (10 > 20) evaluate to?`,
+      opts: ["false", "true", "null", "undefined"],
+      ans: "A",
+      exp: "10 is not greater than 20, so the comparison expression yields false."
+    },
+    {
+      q: `Which logical operator evaluates to true if AT LEAST ONE of its conditions is true in ${langUpper}?`,
+      opts: [langUpper === "PYTHON" ? "or" : "||", langUpper === "PYTHON" ? "and" : "&&", "!", "=="],
+      ans: "A",
+      exp: "Logical OR returns true if any of the operand expressions are true."
+    }
+  ],
+  loops: (langUpper) => [
+    {
       q: `In ${langUpper}, which loop construct is guaranteed to execute its body at least once?`,
-      opts: ["for loop", "while loop", "do-while loop", "foreach loop"],
-      ans: "C",
+      opts: ["do-while loop", "for loop", "while loop", "foreach loop"],
+      ans: "A",
       exp: "A do-while loop evaluates its conditional expression after executing the body once."
     },
     {
       q: `What will happen if an infinite loop executes in a running process?`,
-      opts: ["Process finishes immediately", "CPU usage stays at 100% until timeout or termination", "Memory leaks immediately to 0", "Compiler throws a syntax error"],
-      ans: "B",
+      opts: ["CPU usage stays at high utilization until timeout or termination", "Process finishes immediately", "Memory leaks immediately to 0", "Compiler throws a syntax error"],
+      ans: "A",
       exp: "An infinite loop without termination keeps utilizing CPU cycles continuously."
     },
     {
       q: `What is the primary purpose of a loop termination condition?`,
-      opts: ["To optimize memory allocation", "To prevent infinite iteration and exit loop cleanly", "To define variable scope", "To invoke garbage collection"],
-      ans: "B",
+      opts: ["To prevent infinite iteration and exit loop cleanly", "To optimize memory allocation", "To define variable scope", "To invoke garbage collection"],
+      ans: "A",
       exp: "The termination condition checks whether iteration should continue or exit."
     },
     {
       q: `Which keyword is used to skip the current iteration of a loop in ${langUpper}?`,
-      opts: ["break", "return", "continue", "skip"],
-      ans: "C",
-      exp: "The continue statement bypasses the remaining loop statements and advances to the next iteration."
+      opts: ["continue", "break", "return", "skip"],
+      ans: "A",
+      exp: "The continue statement bypasses remaining statements in the current iteration and advances to the next."
     },
     {
       q: `Which keyword terminates the entire loop immediately in ${langUpper}?`,
-      opts: ["stop", "break", "exit", "terminate"],
-      ans: "B",
+      opts: ["break", "stop", "exit", "terminate"],
+      ans: "A",
       exp: "The break statement terminates execution of the nearest enclosing loop or switch."
     },
     {
-      q: `What is an index out of bounds error?`,
-      opts: ["Accessing an array element outside its valid index range", "Declaring too many variables", "Using negative numbers in math functions", "Dividing by zero"],
+      q: `What is an off-by-one error in loop boundary conditions?`,
+      opts: ["Executing a loop one time too many or one time too few due to incorrect comparison operators (< vs <=)", "Dividing loop counter by zero", "Declaring two variables with the same name", "Forgetting to initialize a string"],
       ans: "A",
-      exp: "Attempting to access an index < 0 or >= size results in an index out of bounds condition."
-    },
-    {
-      q: `What is the 0-based index of the first element in an array?`,
-      opts: ["-1", "0", "1", "2"],
-      ans: "B",
-      exp: "In 0-indexed languages like C, C++, Java, and Python, the first element resides at index 0."
-    },
-    {
-      q: `In ${langUpper}, which operator represents the logical AND operation?`,
-      opts: ["&", "&&", "AND", "=="],
-      ans: "B",
-      exp: "&& is the logical AND operator that evaluates to true only if both operands are true."
-    },
-    {
-      q: `What is a common cause of off-by-one errors in loop conditions?`,
-      opts: ["Using < instead of <= (or vice-versa) on boundary indices", "Naming variables incorrectly", "Using floats instead of doubles", "Adding comments inside loop"],
-      ans: "A",
-      exp: "Off-by-one errors frequently arise when boundary comparisons (< vs <=) mismatch the collection size."
-    },
-    {
-      q: `What is the space complexity of an in-place array reversal?`,
-      opts: ["O(N)", "O(1)", "O(log N)", "O(N^2)"],
-      ans: "B",
-      exp: "In-place reversal operates with two pointers using constant extra auxiliary space O(1)."
+      exp: "Off-by-one errors stem from boundary mismatches (e.g. using <= size instead of < size)."
     },
     {
       q: `Which control structure is best suited when the exact number of iterations is known beforehand?`,
-      opts: ["while loop", "for loop", "do-while loop", "try-catch"],
-      ans: "B",
-      exp: "A for loop provides compact initialization, condition, and increment in a single header."
+      opts: ["for loop", "while loop", "do-while loop", "try-catch"],
+      ans: "A",
+      exp: "A for loop encapsulates initialization, condition, and increment cleanly."
+    },
+    {
+      q: `What is the total number of iterations executed by a nested loop where outer loop runs 3 times and inner loop runs 4 times?`,
+      opts: ["12", "7", "3", "4"],
+      ans: "A",
+      exp: "For each outer loop iteration (3), the inner loop runs 4 times: 3 * 4 = 12 total iterations."
+    },
+    {
+      q: `What happens to the loop counter variable in a standard increment loop like for (int i = 0; i < 5; i++)?`,
+      opts: ["i increases by 1 after each iteration body execution", "i decreases by 1 after each iteration", "i remains 0 forever", "i doubles every step"],
+      ans: "A",
+      exp: "The increment step `i++` adds 1 to counter `i` at the end of every loop iteration."
+    },
+    {
+      q: `In ${langUpper}, what is a while loop condition check?`,
+      opts: ["Evaluating the loop condition before executing the loop body on every iteration", "Checking condition once at compile time", "Evaluating condition only after loop finishes", "Ignoring condition"],
+      ans: "A",
+      exp: "A while loop tests its boolean condition prior to executing the loop body."
     }
-  ];
+  ],
+  arrays: (langUpper) => [
+    {
+      q: `What is the 0-based index of the first element in an array in ${langUpper}?`,
+      opts: ["0", "-1", "1", "2"],
+      ans: "A",
+      exp: "In 0-indexed languages, the initial element resides at index 0."
+    },
+    {
+      q: `What is an index out of bounds error?`,
+      opts: ["Accessing an array element outside its valid index range [0, size - 1]", "Declaring too many variables", "Using negative numbers in math functions", "Dividing by zero"],
+      ans: "A",
+      exp: "Accessing index < 0 or >= array size triggers an out of bounds error."
+    },
+    {
+      q: `How do you access the third element of an array named arr in ${langUpper}?`,
+      opts: ["arr[2]", "arr[3]", "arr(3)", "arr->3"],
+      ans: "A",
+      exp: "Because indexing starts at 0, the third element is at subscript index 2."
+    },
+    {
+      q: `What is array traversal?`,
+      opts: ["Visiting each element of an array sequentially to read or update values", "Sorting an array in reverse order", "Allocating array memory on heap", "Deleting all elements in array"],
+      ans: "A",
+      exp: "Array traversal accesses elements from index 0 to index size-1."
+    },
+    {
+      q: `What is the output of: int nums[3] = {10, 20, 30}; nums[1] = 50; print(nums[1]); in ${langUpper}?`,
+      opts: ["50", "20", "10", "30"],
+      ans: "A",
+      exp: "nums[1] is updated from 20 to 50, so printing nums[1] outputs 50."
+    },
+    {
+      q: `What is a 2D array / matrix in ${langUpper}?`,
+      opts: ["An array of arrays organized in rows and columns", "A 1D array containing floats", "An array with no fixed size", "A string container"],
+      ans: "A",
+      exp: "A 2D array represents grid data with row and column subscript indices matrix[row][col]."
+    },
+    {
+      q: `In ${langUpper}, how is contiguous memory layout beneficial for arrays?`,
+      opts: ["It enables O(1) constant-time direct element access via index calculation", "It automatically sorts elements", "It prevents array overflow", "It encrypts element data"],
+      ans: "A",
+      exp: "Contiguous memory allows calculating element address as base_address + index * element_size."
+    },
+    {
+      q: `What method or property returns the number of elements in a list or array container in ${langUpper}?`,
+      opts: [langUpper === "PYTHON" ? "len(arr)" : (langUpper === "CPP" ? "arr.size()" : "arr.length"), "arr.count()", "arr.max()", "arr.capacity()"],
+      ans: "A",
+      exp: `In ${langUpper}, array/list length is retrieved using ${langUpper === "PYTHON" ? "len()" : (langUpper === "CPP" ? ".size()" : ".length")}.`
+    },
+    {
+      q: `What happens when you append an element to a dynamic array / vector in ${langUpper}?`,
+      opts: ["The element is added at the end of the array, expanding its size", "The element replaces index 0", "All existing elements are deleted", "The array is cleared"],
+      ans: "A",
+      exp: "Pushing or appending places the new element past the current last index."
+    },
+    {
+      q: `What is the time complexity of looking up an array element by its known index?`,
+      opts: ["O(1)", "O(N)", "O(log N)", "O(N^2)"],
+      ans: "A",
+      exp: "Array subscript lookup is constant time O(1) because element location is computed directly."
+    }
+  ],
+  recursion: (langUpper) => [
+    {
+      q: `What is the essential condition in a recursive function that stops further recursive calls?`,
+      opts: ["Base case", "Recursive step", "Infinite loop", "Main function"],
+      ans: "A",
+      exp: "The base case provides a non-recursive return path that terminates recursion."
+    },
+    {
+      q: `What error occurs when a recursive function lacks a base case in ${langUpper}?`,
+      opts: ["Stack overflow (Maximum call stack size exceeded / Segmentation fault)", "Memory compaction error", "File not found error", "Syntax compilation error"],
+      ans: "A",
+      exp: "Infinite recursive invocation fills available call stack memory, causing stack overflow."
+    },
+    {
+      q: `What data structure handles function call tracking during recursive execution?`,
+      opts: ["Call stack", "Queue", "Heap", "Hash table"],
+      ans: "A",
+      exp: "The call stack manages local variables, parameter frames, and return addresses."
+    },
+    {
+      q: `What is the return value of factorial(3) defined as: int fact(int n) { return (n <= 1) ? 1 : n * fact(n-1); }?`,
+      opts: ["6", "3", "1", "9"],
+      ans: "A",
+      exp: "fact(3) = 3 * fact(2) = 3 * 2 * fact(1) = 3 * 2 * 1 = 6."
+    },
+    {
+      q: `What is a recursive case?`,
+      opts: ["The branch of a recursive function that reduces the problem and calls the function itself", "The branch that prints output", "The main entry point", "A syntax error"],
+      ans: "A",
+      exp: "The recursive case breaks down the input and invokes the function recursively on smaller inputs."
+    }
+  ],
+  logic: (langUpper) => [
+    {
+      q: `In ${langUpper}, which operator represents the logical AND operation?`,
+      opts: [langUpper === "PYTHON" ? "and" : "&&", "&", "AND", "=="],
+      ans: "A",
+      exp: "Logical AND yields true only if both evaluated operands are true."
+    },
+    {
+      q: `What is short-circuit evaluation in boolean logic?`,
+      opts: ["Stopping evaluation of a compound boolean expression as soon as the outcome is determined", "Bypassing compiler optimization", "Shortening variable names", "Executing loops faster"],
+      ans: "A",
+      exp: "For example, in (false && expr), expr is skipped because false AND anything is always false."
+    },
+    {
+      q: `What is the result of the logical NOT operation on a true expression?`,
+      opts: ["false", "true", "null", "1"],
+      ans: "A",
+      exp: "Logical NOT inverts boolean truth values, turning true into false."
+    }
+  ],
+  syntax: (langUpper) => [
+    {
+      q: `In ${langUpper}, which symbol is used at the end of statements to denote completion in C/C++/Java?`,
+      opts: [langUpper === "PYTHON" ? "Newline / Indentation" : "; (semicolon)", ": (colon)", ". (period)", ", (comma)"],
+      ans: "A",
+      exp: `In ${langUpper}, statement termination uses ${langUpper === "PYTHON" ? "newlines" : "semicolons"}.`
+    },
+    {
+      q: `What is a syntax error?`,
+      opts: ["A violation of the programming language's grammar rules detected during parsing/compilation", "A logic bug that produces wrong answers at runtime", "A slow network connection", "A missing database table"],
+      ans: "A",
+      exp: "Syntax errors occur when code structure violates language grammatical rules."
+    }
+  ],
+  basics: (langUpper) => [
+    {
+      q: `What is the output of 15 % 4 (modulo operator) in ${langUpper}?`,
+      opts: ["3", "3.75", "1", "4"],
+      ans: "A",
+      exp: "15 divided by 4 is 3 with a remainder of 3. The % operator returns the remainder (3)."
+    },
+    {
+      q: `What is the primary function of a compiler or interpreter in programming?`,
+      opts: ["Translating source code into executable instructions for the machine", "Editing text files", "Searching the internet", "Designing graphics"],
+      ans: "A",
+      exp: "Compilers/interpreters translate human-readable source code into machine-executable instructions."
+    }
+  ]
+};
+
+const generateFallbackQuizQuestions = (topics, language, neededCount, startIndex = 0) => {
+  const langUpper = (language || "cpp").toUpperCase();
+  const primaryTopic = topics && topics.length > 0 ? topics[0].toLowerCase().trim() : "variables";
+  
+  const bankFn = FALLBACK_TOPIC_BANKS[primaryTopic] || FALLBACK_TOPIC_BANKS.variables;
+  const questionTemplates = bankFn(langUpper);
 
   const fallbackList = [];
   for (let i = 0; i < neededCount; i++) {

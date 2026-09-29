@@ -58,7 +58,7 @@ async function connectDB() {
       dbName,
       minPoolSize: 2,
       maxPoolSize: 50,
-      serverSelectionTimeoutMS: 15000,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
     });
 
@@ -70,7 +70,7 @@ async function connectDB() {
     }
   } catch (error) {
     console.error(`[MongoDB] Connection failed: ${error.message}`);
-    console.warn('[MongoDB] Application running in offline/degraded mode. Retrying connection in 5s...');
+    console.warn('[MongoDB] Application running in degraded mode. Retrying connection in 5s...');
     scheduleReconnect();
   } finally {
     isConnecting = false;

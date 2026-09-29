@@ -199,8 +199,16 @@ class AIClient:
                 return q_dict
 
             # Extract target topics
-            target_topics = ["loops", "arrays", "basics"]
-            if "Use only these topics:" in prompt:
+            target_topics = ["variables"]
+            if "The requested topics are:" in prompt:
+                try:
+                    start_idx = prompt.index("The requested topics are:")
+                    json_start = prompt.index("[", start_idx)
+                    json_end = prompt.index("]", json_start) + 1
+                    target_topics = json.loads(prompt[json_start:json_end])
+                except Exception:
+                    pass
+            elif "Use only these topics:" in prompt:
                 try:
                     start_idx = prompt.index("Use only these topics:")
                     json_start = prompt.index("[", start_idx)
@@ -211,9 +219,13 @@ class AIClient:
 
             def map_topic_alias(t: str) -> str:
                 norm = t.lower().strip()
-                if norm in ("variables", "data-types", "operators", "basics"):
+                if norm in ("variables", "variable", "var"):
+                    return "variables"
+                if norm in ("conditionals", "conditional", "if-else"):
+                    return "conditionals"
+                if norm in ("data-types", "operators", "basics"):
                     return "basics"
-                if norm in ("conditionals", "logic", "boolean"):
+                if norm in ("logic", "boolean"):
                     return "logic"
                 if norm in ("syntax", "functions"):
                     return "syntax"
@@ -281,6 +293,111 @@ class AIClient:
 
             # Comprehensive, Real Programming Assessment Question Pool
             topic_pools = {
+                ("variables", "cpp"): [
+                    {
+                        "question": "What is the output of the following C++ variable declaration and modification snippet?\nint x = 10;\nx = x + 5;\nstd::cout << x;",
+                        "options": ["A) 15", "B) 10", "C) 5", "D) Compiler error"],
+                        "correctAnswer": "A",
+                        "explanation": "x is initialized to 10. Re-assigning x = x + 5 evaluates 10 + 5 = 15.",
+                        "topic": "variables",
+                        "difficulty": "easy",
+                    },
+                    {
+                        "question": "Which statement correctly declares a constant integer variable in C++ whose value cannot be changed?",
+                        "options": [
+                            "A) const int MAX_SIZE = 100;",
+                            "B) constant int MAX_SIZE = 100;",
+                            "C) int const MAX_SIZE := 100;",
+                            "D) final int MAX_SIZE = 100;",
+                        ],
+                        "correctAnswer": "A",
+                        "explanation": "In C++, the `const` keyword specifies that a variable's value is constant and read-only.",
+                        "topic": "variables",
+                        "difficulty": "easy",
+                    },
+                    {
+                        "question": "What is the output of variable scope shadowing in this C++ snippet?\nint a = 10;\n{\n    int a = 20;\n}\nstd::cout << a;",
+                        "options": ["A) 10", "B) 20", "C) Compiler error", "D) 0"],
+                        "correctAnswer": "A",
+                        "explanation": "The inner variable `a` exists only inside the block scope. Outside the block, `a` refers to the outer scope variable (10).",
+                        "topic": "variables",
+                        "difficulty": "medium",
+                    },
+                    {
+                        "question": "What is the result of explicit variable type casting in C++:\nint total = 9, count = 2;\ndouble avg = static_cast<double>(total) / count;\nstd::cout << avg;",
+                        "options": ["A) 4.5", "B) 4", "C) 4.0", "D) 4.25"],
+                        "correctAnswer": "A",
+                        "explanation": "static_cast<double>(total) casts 9 to 9.0, producing 9.0 / 2 = 4.5.",
+                        "topic": "variables",
+                        "difficulty": "medium",
+                    },
+                ],
+                ("variables", "python"): [
+                    {
+                        "question": "What is the value of variable `x` after executing this Python snippet:\nx = 10\nx += 5\nprint(x)",
+                        "options": ["A) 15", "B) 10", "C) 5", "D) Error"],
+                        "correctAnswer": "A",
+                        "explanation": "x += 5 increments variable x from 10 to 15.",
+                        "topic": "variables",
+                        "difficulty": "easy",
+                    },
+                    {
+                        "question": "In Python, what happens when you reassign a variable to a value of a different data type?\nx = 10\nx = 'Hello'\nprint(type(x))",
+                        "options": [
+                            "A) <class 'str'>",
+                            "B) TypeError: cannot change type",
+                            "C) <class 'int'>",
+                            "D) SyntaxError",
+                        ],
+                        "correctAnswer": "A",
+                        "explanation": "Python is dynamically typed, so a variable can be reassigned to any object type.",
+                        "topic": "variables",
+                        "difficulty": "easy",
+                    },
+                ],
+                ("variables", "java"): [
+                    {
+                        "question": "What happens when attempting to modify a `final` variable in Java:\nfinal int RATE = 5;\nRATE = 10;\nSystem.out.println(RATE);",
+                        "options": [
+                            "A) Compilation error: cannot assign a value to final variable RATE",
+                            "B) Output is 10",
+                            "C) Output is 5",
+                            "D) Runtime Exception",
+                        ],
+                        "correctAnswer": "A",
+                        "explanation": "In Java, final variables are constant and cannot be reassigned once initialized.",
+                        "topic": "variables",
+                        "difficulty": "easy",
+                    },
+                ],
+                ("variables", "c"): [
+                    {
+                        "question": "What is the output of the following C variable assignment snippet:\nint a = 5, b = 2;\nfloat c = (float)a / b;\nprintf(\"%.1f\", c);",
+                        "options": ["A) 2.5", "B) 2.0", "C) 2", "D) 3.0"],
+                        "correctAnswer": "A",
+                        "explanation": "(float)a casts 5 to 5.0f, causing float division 5.0f / 2 = 2.5f.",
+                        "topic": "variables",
+                        "difficulty": "medium",
+                    },
+                ],
+                ("conditionals", "cpp"): [
+                    {
+                        "question": "What is the output of the following C++ conditional code:\nint score = 75;\nif (score >= 90) {\n    std::cout << \"A\";\n} else if (score >= 70) {\n    std::cout << \"B\";\n} else {\n    std::cout << \"C\";\n}",
+                        "options": ["A) B", "B) A", "C) C", "D) AB"],
+                        "correctAnswer": "A",
+                        "explanation": "score=75 fails score >= 90, but passes score >= 70, printing 'B'.",
+                        "topic": "conditionals",
+                        "difficulty": "easy",
+                    },
+                    {
+                        "question": "What is the output of the ternary conditional operator in C++:\nint a = 12, b = 20;\nint maxVal = (a > b) ? a : b;\nstd::cout << maxVal;",
+                        "options": ["A) 20", "B) 12", "C) 0", "D) Compiler error"],
+                        "correctAnswer": "A",
+                        "explanation": "Since 12 > 20 is false, the ternary operator evaluates the second expression `b` (20).",
+                        "topic": "conditionals",
+                        "difficulty": "easy",
+                    },
+                ],
                 ("basics", "cpp"): [
                     {
                         "question": "What is the output of the following C++ code snippet?\nint a = 5;\nint b = a++;\nint c = ++a;\nstd::cout << a << \" \" << b << \" \" << c;",
@@ -297,27 +414,6 @@ class AIClient:
                         "explanation": "Since 10 > 20 is false, the ternary operator evaluates the false branch: 20 - 10 = 10.",
                         "topic": "basics",
                         "difficulty": "easy",
-                    },
-                    {
-                        "question": "What does the `const` qualifier indicate when applied to a variable in C++?\nconst int MAX_USERS = 100;",
-                        "options": [
-                            "A) The variable is read-only and its value cannot be modified after initialization",
-                            "B) The variable is stored in dynamic heap memory",
-                            "C) The variable has local scope only inside main()",
-                            "D) The variable is automatically converted to a double",
-                        ],
-                        "correctAnswer": "A",
-                        "explanation": "In C++, const enforces immutability at compile time; any reassignment triggers a compiler error.",
-                        "topic": "basics",
-                        "difficulty": "easy",
-                    },
-                    {
-                        "question": "What is the output of this C++ code involving integer overflow awareness?\nint a = 10, b = 4;\ndouble c = static_cast<double>(a) / b;\nstd::cout << c;",
-                        "options": ["A) 2.5", "B) 2", "C) 2.0", "D) 0.4"],
-                        "correctAnswer": "A",
-                        "explanation": "static_cast<double>(a) converts 10 to 10.0, promoting floating-point division 10.0 / 4 = 2.5.",
-                        "topic": "basics",
-                        "difficulty": "medium",
                     },
                 ],
                 ("logic", "cpp"): [
@@ -337,14 +433,6 @@ class AIClient:
                         "topic": "logic",
                         "difficulty": "medium",
                     },
-                    {
-                        "question": "What is the output of this C++ switch statement:\nint val = 2;\nswitch (val) {\n    case 1: std::cout << \"1\";\n    case 2: std::cout << \"2\";\n    case 3: std::cout << \"3\"; break;\n    default: std::cout << \"D\";\n}",
-                        "options": ["A) 23", "B) 2", "C) 123", "D) 23D"],
-                        "correctAnswer": "A",
-                        "explanation": "Since case 2 lacks a break statement, execution falls through to case 3, outputting '23' before breaking.",
-                        "topic": "logic",
-                        "difficulty": "medium",
-                    },
                 ],
                 ("syntax", "cpp"): [
                     {
@@ -360,14 +448,6 @@ class AIClient:
                         "topic": "syntax",
                         "difficulty": "easy",
                     },
-                    {
-                        "question": "What is the output of the following C++ function call:\nvoid swapVals(int &a, int b) {\n    a += 5;\n    b += 10;\n}\n// In main:\nint x = 10, y = 20;\nswapVals(x, y);\nstd::cout << x << \" \" << y;",
-                        "options": ["A) 15 20", "B) 15 30", "C) 10 20", "D) 10 30"],
-                        "correctAnswer": "A",
-                        "explanation": "x is passed by reference and is modified (10 + 5 = 15). y is passed by value, so the caller's y remains 20.",
-                        "topic": "syntax",
-                        "difficulty": "medium",
-                    },
                 ],
                 ("loops", "cpp"): [
                     {
@@ -377,27 +457,6 @@ class AIClient:
                         "explanation": "The loop iterates i = 1, 2, 3, 4, 5. Even numbers are 2 and 4. sum = 2 + 4 = 6.",
                         "topic": "loops",
                         "difficulty": "easy",
-                    },
-                    {
-                        "question": "What is the output of this C++ loop with break and continue:\nint total = 0;\nfor (int i = 1; i <= 6; i++) {\n    if (i == 4) break;\n    if (i % 2 != 0) continue;\n    total += i;\n}\nstd::cout << total;",
-                        "options": ["A) 2", "B) 6", "C) 12", "D) 0"],
-                        "correctAnswer": "A",
-                        "explanation": "i=1: continue. i=2: total += 2 (total=2). i=3: continue. i=4: break immediately. Loop ends with total = 2.",
-                        "topic": "loops",
-                        "difficulty": "medium",
-                    },
-                    {
-                        "question": "What bug is present in the following C++ loop intended to sum numbers 1 to 5:\nint sum = 0, i = 1;\nwhile (i <= 5);\n{\n    sum += i;\n    i++;\n}\nstd::cout << sum;",
-                        "options": [
-                            "A) The semicolon after while (i <= 5); creates an infinite empty loop",
-                            "B) sum must be initialized to 1",
-                            "C) i++ should be ++i",
-                            "D) The while loop syntax is invalid",
-                        ],
-                        "correctAnswer": "A",
-                        "explanation": "The semicolon right after while (i <= 5); forms an empty loop body where i is never incremented, creating an infinite loop.",
-                        "topic": "loops",
-                        "difficulty": "medium",
                     },
                     {
                         "question": "What is the output of this nested C++ loop:\nint count = 0;\nfor (int i = 0; i < 3; i++) {\n    for (int j = i; j < 3; j++) {\n        count++;\n    }\n}\nstd::cout << count;",
@@ -430,19 +489,6 @@ class AIClient:
                         "topic": "arrays",
                         "difficulty": "medium",
                     },
-                    {
-                        "question": "What is the time complexity of appending an element to a `std::vector` using `push_back` in C++?",
-                        "options": [
-                            "A) Amortized O(1)",
-                            "B) Strict O(N)",
-                            "C) O(log N)",
-                            "D) O(N^2)",
-                        ],
-                        "correctAnswer": "A",
-                        "explanation": "std::vector doubling capacity reallocation ensures amortized constant time O(1) for push_back.",
-                        "topic": "arrays",
-                        "difficulty": "medium",
-                    },
                 ],
                 ("recursion", "cpp"): [
                     {
@@ -453,19 +499,6 @@ class AIClient:
                         "topic": "recursion",
                         "difficulty": "medium",
                     },
-                    {
-                        "question": "What happens if a recursive function in C++ is called without a valid base case?",
-                        "options": [
-                            "A) The call stack overflows resulting in a runtime crash (Segmentation fault / Stack overflow)",
-                            "B) The compiler automatically inserts a base case return 0",
-                            "C) The function returns nullptr",
-                            "D) The memory is moved to the heap automatically",
-                        ],
-                        "correctAnswer": "A",
-                        "explanation": "Infinite recursion continuously pushes stack frames until stack memory limit is exceeded, terminating the process.",
-                        "topic": "recursion",
-                        "difficulty": "easy",
-                    },
                 ],
                 ("searching", "cpp"): [
                     {
@@ -475,19 +508,6 @@ class AIClient:
                         "explanation": "Binary search takes at most floor(log2(N)) + 1 comparisons. For 64: log2(64) + 1 = 6 + 1 = 7.",
                         "topic": "searching",
                         "difficulty": "medium",
-                    },
-                    {
-                        "question": "What prerequisite must be met before executing binary search on an array or vector?",
-                        "options": [
-                            "A) The elements must be sorted in monotonic order",
-                            "B) The size must be an exact power of two",
-                            "C) All elements must be unique positive integers",
-                            "D) The container must be allocated using new",
-                        ],
-                        "correctAnswer": "A",
-                        "explanation": "Binary search relies on sorted ordering to eliminate half of the remaining search space at each comparison step.",
-                        "topic": "searching",
-                        "difficulty": "easy",
                     },
                 ],
                 # Python Pools
@@ -500,14 +520,6 @@ class AIClient:
                         "topic": "basics",
                         "difficulty": "medium",
                     },
-                    {
-                        "question": "What is the value of `x` after executing:\nx = 10 if 5 > 8 else 20\nprint(x)",
-                        "options": ["A) 20", "B) 10", "C) None", "D) False"],
-                        "correctAnswer": "A",
-                        "explanation": "The ternary expression evaluates to the else branch (20) because 5 > 8 is False.",
-                        "topic": "basics",
-                        "difficulty": "easy",
-                    },
                 ],
                 ("loops", "python"): [
                     {
@@ -517,14 +529,6 @@ class AIClient:
                         "explanation": "range(1, 6) produces 1, 2, 3, 4, 5. The evens are 2 and 4. 2 + 4 = 6.",
                         "topic": "loops",
                         "difficulty": "easy",
-                    },
-                    {
-                        "question": "What is the output of this Python loop with break:\ns = 0\nfor x in [2, 4, 6, 8]:\n    if x == 6:\n        break\n    s += x\nprint(s)",
-                        "options": ["A) 6", "B) 12", "C) 20", "D) 2"],
-                        "correctAnswer": "A",
-                        "explanation": "x=2: s=2. x=4: s=6. x=6: break terminates the loop. Output is 6.",
-                        "topic": "loops",
-                        "difficulty": "medium",
                     },
                 ],
                 ("arrays", "python"): [
@@ -584,72 +588,137 @@ class AIClient:
             def generate_topic_dynamic_question(topic_name: str, lang: str, index: int) -> dict:
                 norm_topic = map_topic_alias(topic_name)
                 norm_lang = lang.lower().strip()
-                q_type = index % 5
 
-                # 1. Code Tracing (Loops & Conditionals)
-                if q_type == 0:
-                    k = (index % 3) + 2
-                    lim = (index % 4) + 4
-                    expected_sum = sum(i * k for i in range(1, lim + 1) if i % 2 == 0)
-                    distractor1 = sum(i * k for i in range(1, lim + 1))
-                    distractor2 = sum(i for i in range(1, lim + 1) if i % 2 == 0)
-                    distractor3 = expected_sum + k
-
-                    if norm_lang == "python":
-                        code = f"total = 0\nfor i in range(1, {lim + 1}):\n    if i % 2 == 0:\n        total += i * {k}\nprint(total)"
-                    elif norm_lang == "java":
-                        code = f"int total = 0;\nfor (int i = 1; i <= {lim}; i++) {{\n    if (i % 2 == 0) total += i * {k};\n}}\nSystem.out.println(total);"
-                    elif norm_lang == "c":
-                        code = f"int total = 0;\nfor (int i = 1; i <= {lim}; i++) {{\n    if (i % 2 == 0) total += i * {k};\n}}\nprintf(\"%d\", total);"
+                if norm_topic == "variables":
+                    v_type = index % 5
+                    if v_type == 0:
+                        x_val = index * 5 + 10
+                        inc = index + 2
+                        ans = x_val + inc
+                        if norm_lang == "python":
+                            code = f"x = {x_val}\nx = x + {inc}\nprint(x)"
+                        elif norm_lang == "java":
+                            code = f"int x = {x_val};\nx = x + {inc};\nSystem.out.println(x);"
+                        elif norm_lang == "c":
+                            code = f"int x = {x_val};\nx = x + {inc};\nprintf(\"%d\", x);"
+                        else:
+                            code = f"int x = {x_val};\nx = x + {inc};\nstd::cout << x;"
+                        return {
+                            "question": f"What value will variable x contain after executing this {norm_lang.upper()} code snippet?\n{code}",
+                            "options": [f"A) {ans}", f"B) {x_val}", f"C) {inc}", f"D) {ans + 5}"],
+                            "correctAnswer": "A",
+                            "explanation": f"x is initialized to {x_val} and then updated by adding {inc}, resulting in {ans}.",
+                            "topic": "variables",
+                            "difficulty": "easy",
+                        }
+                    elif v_type == 1:
+                        val = index + 5
+                        if norm_lang == "python":
+                            code = f"LIMIT = {val}\nLIMIT = {val + 10}"
+                            msg = "Python variables cannot be strictly const at runtime, but all-caps convention signals immutability"
+                        elif norm_lang == "java":
+                            code = f"final int LIMIT = {val};\nLIMIT = {val + 10};"
+                            msg = "Cannot assign a value to final variable LIMIT (compiler error)"
+                        elif norm_lang == "c":
+                            code = f"const int LIMIT = {val};\nLIMIT = {val + 10};"
+                            msg = "Assignment of read-only variable LIMIT triggers a compiler error"
+                        else:
+                            code = f"const int LIMIT = {val};\nLIMIT = {val + 10};"
+                            msg = "Cannot modify read-only const variable LIMIT (compiler error)"
+                        return {
+                            "question": f"What occurs when attempting to modify the variable in this {norm_lang.upper()} snippet?\n{code}",
+                            "options": [f"A) {msg}", f"B) LIMIT becomes {val + 10}", f"C) LIMIT is reset to 0", f"D) Runtime warning only"],
+                            "correctAnswer": "A",
+                            "explanation": f"In {norm_lang.upper()}, const/final variables cannot be reassigned after initialization.",
+                            "topic": "variables",
+                            "difficulty": "medium",
+                        }
+                    elif v_type == 2:
+                        a = index * 2 + 4
+                        b = 2
+                        res = a // b if norm_lang == "python" else a / b
+                        if norm_lang == "python":
+                            code = f"a = {a}\nb = {b}\nresult = a / b\nprint(type(result))"
+                            ans = "<class 'float'>"
+                        elif norm_lang == "java":
+                            code = f"int a = {a};\nint b = {b};\ndouble result = (double) a / b;\nSystem.out.println(result);"
+                            ans = f"{res:.1f}"
+                        elif norm_lang == "c":
+                            code = f"int a = {a};\nint b = {b};\ndouble result = (double) a / b;\nprintf(\"%.1f\", result);"
+                            ans = f"{res:.1f}"
+                        else:
+                            code = f"int a = {a};\nint b = {b};\ndouble result = static_cast<double>(a) / b;\nstd::cout << result;"
+                            ans = f"{res}"
+                        return {
+                            "question": f"What is the output regarding variable data types in this {norm_lang.upper()} snippet?\n{code}",
+                            "options": [f"A) {ans}", f"B) 0", f"C) Error", f"D) Null"],
+                            "correctAnswer": "A",
+                            "explanation": f"Casting or dividing converts integer values to floating-point result {ans}.",
+                            "topic": "variables",
+                            "difficulty": "medium",
+                        }
+                    elif v_type == 3:
+                        v1 = index + 3
+                        v2 = index + 7
+                        if norm_lang == "python":
+                            code = f"a = {v1}\nb = {v2}\na, b = b, a\nprint(a, b)"
+                        elif norm_lang == "java":
+                            code = f"int a = {v1}, b = {v2};\nint temp = a;\na = b;\nb = temp;\nSystem.out.println(a + \" \" + b);"
+                        elif norm_lang == "c":
+                            code = f"int a = {v1}, b = {v2};\nint temp = a;\na = b;\nb = temp;\nprintf(\"%d %d\", a, b);"
+                        else:
+                            code = f"int a = {v1}, b = {v2};\nint temp = a;\na = b;\nb = temp;\nstd::cout << a << \" \" << b;"
+                        return {
+                            "question": f"What are the final values of variables a and b in this {norm_lang.upper()} swap snippet?\n{code}",
+                            "options": [f"A) {v2} {v1}", f"B) {v1} {v2}", f"C) {v1} {v1}", f"D) {v2} {v2}"],
+                            "correctAnswer": "A",
+                            "explanation": f"The values of variables a and b are swapped, making a={v2} and b={v1}.",
+                            "topic": "variables",
+                            "difficulty": "easy",
+                        }
                     else:
-                        code = f"int total = 0;\nfor (int i = 1; i <= {lim}; i++) {{\n    if (i % 2 == 0) total += i * {k};\n}}\nstd::cout << total;"
+                        init_val = index + 1
+                        inc_val = index + 4
+                        final_val = init_val + inc_val
+                        if norm_lang == "python":
+                            code = f"count = {init_val}\ncount += {inc_val}\nprint(count)"
+                        elif norm_lang == "java":
+                            code = f"int count = {init_val};\ncount += {inc_val};\nSystem.out.println(count);"
+                        elif norm_lang == "c":
+                            code = f"int count = {init_val};\ncount += {inc_val};\nprintf(\"%d\", count);"
+                        else:
+                            code = f"int count = {init_val};\ncount += {inc_val};\nstd::cout << count;"
+                        return {
+                            "question": f"What value is assigned to the variable `count` after compound assignment in {norm_lang.upper()}?\n{code}",
+                            "options": [f"A) {final_val}", f"B) {init_val}", f"C) {inc_val}", f"D) 0"],
+                            "correctAnswer": "A",
+                            "explanation": f"`count += {inc_val}` expands to `count = {init_val} + {inc_val} = {final_val}`.",
+                            "topic": "variables",
+                            "difficulty": "easy",
+                        }
 
+                elif norm_topic == "conditionals":
+                    val = index * 5 + 10
+                    thresh = 25
+                    ans = "YES" if val > thresh else "NO"
+                    if norm_lang == "python":
+                        code = f"score = {val}\nif score > {thresh}:\n    print(\"YES\")\nelse:\n    print(\"NO\")"
+                    elif norm_lang == "java":
+                        code = f"int score = {val};\nif (score > {thresh}) {{\n    System.out.println(\"YES\");\n}} else {{\n    System.out.println(\"NO\");\n}}"
+                    elif norm_lang == "c":
+                        code = f"int score = {val};\nif (score > {thresh}) {{\n    printf(\"YES\");\n}} else {{\n    printf(\"NO\");\n}}"
+                    else:
+                        code = f"int score = {val};\nif (score > {thresh}) {{\n    std::cout << \"YES\";\n}} else {{\n    std::cout << \"NO\";\n}}"
                     return {
-                        "question": f"What is the output of the following {norm_lang.upper()} code snippet?\n{code}",
-                        "options": [
-                            f"A) {expected_sum}",
-                            f"B) {distractor1}",
-                            f"C) {distractor2}",
-                            f"D) {distractor3}",
-                        ],
+                        "question": f"What is the output of this {norm_lang.upper()} conditional branch (test case {index})?\n{code}",
+                        "options": [f"A) {ans}", f"B) {'NO' if ans == 'YES' else 'YES'}", "C) Compiler error", "D) None"],
                         "correctAnswer": "A",
-                        "explanation": f"The loop filters even numbers in 1..{lim} and accumulates i * {k}, resulting in {expected_sum}.",
-                        "topic": "loops",
-                        "difficulty": "medium",
+                        "explanation": f"Since {val} > {thresh} evaluates to {val > thresh}, the corresponding branch is executed.",
+                        "topic": "conditionals",
+                        "difficulty": "easy",
                     }
 
-                # 2. Debugging / Identify Bug
-                elif q_type == 1:
-                    size = (index % 3) + 4
-                    if norm_lang == "python":
-                        code = f"items = list(range({size}))\nfor i in range({size + 1}):\n    print(items[i])"
-                        bug_desc = f"IndexError: list index out of range at index {size}"
-                    elif norm_lang == "java":
-                        code = f"int[] arr = new int[{size}];\nfor (int i = 0; i <= {size}; i++) {{\n    System.out.println(arr[i]);\n}}"
-                        bug_desc = f"ArrayIndexOutOfBoundsException accessing index {size}"
-                    elif norm_lang == "c":
-                        code = f"int arr[{size}];\nfor (int i = 0; i <= {size}; i++) {{\n    printf(\"%d\\n\", arr[i]);\n}}"
-                        bug_desc = f"Off-by-one buffer overrun accessing out-of-bounds index {size}"
-                    else:
-                        code = f"int arr[{size}];\nfor (int i = 0; i <= {size}; i++) {{\n    std::cout << arr[i] << \"\\n\";\n}}"
-                        bug_desc = f"Off-by-one error: valid indices are 0 to {size - 1}, but loop attempts to access index {size}"
-
-                    return {
-                        "question": f"Which critical error or bug occurs in this {norm_lang.upper()} code snippet?\n{code}",
-                        "options": [
-                            f"A) {bug_desc}",
-                            f"B) Infinite loop caused by unincremented loop counter",
-                            f"C) Memory leak from unreleased heap allocation",
-                            f"D) Syntax error in loop initialization header",
-                        ],
-                        "correctAnswer": "A",
-                        "explanation": f"The loop boundary condition checks `<= {size}`, accessing one past the last valid index {size - 1}.",
-                        "topic": "debugging",
-                        "difficulty": "medium",
-                    }
-
-                # 3. Core Concepts / Algorithm Tracing (Array State)
-                elif q_type == 2:
+                elif norm_topic == "arrays":
                     v0 = index + 2
                     v1 = index * 2 + 3
                     v2 = index + 5
@@ -677,35 +746,8 @@ class AIClient:
                         "difficulty": "easy",
                     }
 
-                # 4. Time / Space Complexity
-                elif q_type == 3:
-                    step_type = index % 2
-                    if step_type == 0:
-                        code = f"// Given input size N:\nfor (int i = 1; i <= N; i *= 2) {{\n    // O(1) operations\n}}"
-                        compl = "O(log N)"
-                        reason = "The loop counter doubles on every iteration, executing in logarithmic steps."
-                    else:
-                        code = f"// Given input size N:\nfor (int i = 0; i < N; i++) {{\n    for (int j = 0; j < N; j++) {{\n        // O(1) operations\n    }}\n}}"
-                        compl = "O(N^2)"
-                        reason = "Two nested loops each iterating N times produce N * N = N^2 operations."
-
-                    return {
-                        "question": f"What is the asymptotic time complexity of the following code snippet with respect to N?\n{code}",
-                        "options": [
-                            f"A) {compl}",
-                            f"B) O(1)",
-                            f"C) O(N log N)",
-                            f"D) O(2^N)",
-                        ],
-                        "correctAnswer": "A",
-                        "explanation": reason,
-                        "topic": "complexity",
-                        "difficulty": "medium",
-                    }
-
-                # 5. Practical Programming Logic / Recursion
-                else:
-                    k = (index % 3) + 3
+                elif norm_topic == "recursion":
+                    k = index + 2
                     rec_sum = sum(range(1, k + 1))
                     if norm_lang == "python":
                         code = f"def calc(n):\n    if n <= 1:\n        return 1\n    return n + calc(n - 1)\nprint(calc({k}))"
@@ -729,6 +771,106 @@ class AIClient:
                         "topic": "recursion",
                         "difficulty": "medium",
                     }
+
+                elif norm_topic == "logic":
+                    val1 = index + 5
+                    val2 = index + 10
+                    res_bool = "True" if norm_lang == "python" else "1"
+                    if norm_lang == "python":
+                        code = f"a = {val1}\nb = {val2}\nresult = (a < b) and (b > 0)\nprint(result)"
+                    elif norm_lang == "java":
+                        code = f"int a = {val1}, b = {val2};\nboolean result = (a < b) && (b > 0);\nSystem.out.println(result);"
+                        res_bool = "true"
+                    elif norm_lang == "c":
+                        code = f"int a = {val1}, b = {val2};\nint result = (a < b) && (b > 0);\nprintf(\"%d\", result);"
+                    else:
+                        code = f"int a = {val1}, b = {val2};\nbool result = (a < b) && (b > 0);\nstd::cout << std::boolalpha << result;"
+                        res_bool = "true"
+
+                    return {
+                        "question": f"What is the boolean result of this logical evaluation in {norm_lang.upper()}?\n{code}",
+                        "options": [f"A) {res_bool}", f"B) {'False' if res_bool in ('True', 'true') else '0'}", "C) Error", "D) Null"],
+                        "correctAnswer": "A",
+                        "explanation": f"Both conditions ({val1} < {val2}) and ({val2} > 0) are true, so logical AND evaluates to true.",
+                        "topic": "logic",
+                        "difficulty": "easy",
+                    }
+
+                elif norm_topic == "syntax":
+                    if norm_lang == "python":
+                        code = f"def add_vals(a, b)\n    return a + b"
+                        err = "SyntaxError: missing colon (:) after function definition header"
+                    elif norm_lang == "java":
+                        code = f"int x = {index + 10}"
+                        err = "Syntax error: missing semicolon (;) at end of statement"
+                    elif norm_lang == "c":
+                        code = f"int x = {index + 10}"
+                        err = "Syntax error: missing semicolon (;) at end of statement"
+                    else:
+                        code = f"int x = {index + 10}"
+                        err = "Syntax error: missing semicolon (;) at end of statement"
+
+                    return {
+                        "question": f"Which syntax error is present in this {norm_lang.upper()} snippet?\n{code}",
+                        "options": [f"A) {err}", "B) Invalid variable name", "C) Infinite loop", "D) Type mismatch"],
+                        "correctAnswer": "A",
+                        "explanation": f"In {norm_lang.upper()}, {err}.",
+                        "topic": "syntax",
+                        "difficulty": "easy",
+                    }
+
+                elif norm_topic == "basics":
+                    v1 = index + 2
+                    v2 = index + 3
+                    res = v1 * v2
+                    if norm_lang == "python":
+                        code = f"a = {v1}\nb = {v2}\nprint(a * b)"
+                    elif norm_lang == "java":
+                        code = f"int a = {v1}, b = {v2};\nSystem.out.println(a * b);"
+                    elif norm_lang == "c":
+                        code = f"int a = {v1}, b = {v2};\nprintf(\"%d\", a * b);"
+                    else:
+                        code = f"int a = {v1}, b = {v2};\nstd::cout << a * b;"
+
+                    return {
+                        "question": f"What is the output of this basic {norm_lang.upper()} arithmetic operation?\n{code}",
+                        "options": [f"A) {res}", f"B) {v1 + v2}", f"C) {v1}", f"D) {v2}"],
+                        "correctAnswer": "A",
+                        "explanation": f"Evaluating {v1} * {v2} gives {res}.",
+                        "topic": "basics",
+                        "difficulty": "easy",
+                    }
+
+                # Default fallback: Loops
+                k = (index % 3) + 2
+                lim = (index % 4) + 4
+                expected_sum = sum(i * k for i in range(1, lim + 1) if i % 2 == 0)
+                distractor1 = sum(i * k for i in range(1, lim + 1))
+                distractor2 = sum(i for i in range(1, lim + 1) if i % 2 == 0)
+                distractor3 = expected_sum + k
+
+                if norm_lang == "python":
+                    code = f"total = 0\nfor i in range(1, {lim + 1}):\n    if i % 2 == 0:\n        total += i * {k}\nprint(total)"
+                elif norm_lang == "java":
+                    code = f"int total = 0;\nfor (int i = 1; i <= {lim}; i++) {{\n    if (i % 2 == 0) total += i * {k};\n}}\nSystem.out.println(total);"
+                elif norm_lang == "c":
+                    code = f"int total = 0;\nfor (int i = 1; i <= {lim}; i++) {{\n    if (i % 2 == 0) total += i * {k};\n}}\nprintf(\"%d\", total);"
+                else:
+                    code = f"int total = 0;\nfor (int i = 1; i <= {lim}; i++) {{\n    if (i % 2 == 0) total += i * {k};\n}}\nstd::cout << total;"
+
+                return {
+                    "question": f"What is the output of the following {norm_lang.upper()} code snippet?\n{code}",
+                    "options": [
+                        f"A) {expected_sum}",
+                        f"B) {distractor1}",
+                        f"C) {distractor2}",
+                        f"D) {distractor3}",
+                    ],
+                    "correctAnswer": "A",
+                    "explanation": f"The loop filters even numbers in 1..{lim} and accumulates i * {k}, resulting in {expected_sum}.",
+                    "topic": "loops",
+                    "difficulty": "medium",
+                }
 
             # Select candidate pool strictly from requested (topics, target_lang)
             candidate_pool = []

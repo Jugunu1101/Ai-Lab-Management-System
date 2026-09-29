@@ -3,6 +3,7 @@ const app = require('../../src/app');
 const User = require('../../src/modules/users/user.model');
 const College = require('../../src/modules/colleges/college.model');
 const Quiz = require('../../src/modules/quizzes/quiz.model');
+const { validateQuestionTopic } = require('../../src/modules/quizzes/quiz.service');
 const jwt = require('jsonwebtoken');
 
 describe('Quizzes API', () => {
@@ -101,4 +102,80 @@ describe('Quizzes API', () => {
     expect(res.body.data.totalQuestions).toBe(1);
     expect(res.body.data.correctAnswers).toBe(1);
   });
+
+  describe('Topic Specificity Validation', () => {
+    it('rejects array traversal & time complexity questions when topic is variables', () => {
+      const q1 = {
+        question: 'What is the time complexity of traversing an array of size N in CPP?',
+        options: ['O(1)', 'O(N)', 'O(N^2)', 'O(log N)'],
+        topic: 'variables',
+      };
+      expect(validateQuestionTopic(q1, ['variables'])).toBe(false);
+
+      const q2 = {
+        question: 'What is the value of variable x after: int x = 10; x = x + 5;?',
+        options: ['15', '10', '5', '0'],
+        topic: 'variables',
+      };
+      expect(validateQuestionTopic(q2, ['variables'])).toBe(true);
+    });
+
+    it('rejects variable declaration questions when topic is loops', () => {
+      const qVar = {
+        question: 'Which statement correctly declares an integer variable in C++?',
+        options: ['int x = 10;', 'var x = 10', 'let x = 10', 'integer x = 10'],
+      };
+      expect(validateQuestionTopic(qVar, ['loops'])).toBe(false);
+
+      const qLoop = {
+        question: 'What is the output of for (int i = 0; i < 3; i++) cout << i;',
+        options: ['012', '123', '0123', '321'],
+      };
+      expect(validateQuestionTopic(qLoop, ['loops'])).toBe(true);
+    });
+
+    it('validates all major topics correctly', () => {
+      expect(validateQuestionTopic({ question: 'int arr[5] = {1, 2}; access arr[0]', options: ['1', '2', '0', '5'] }, ['arrays'])).toBe(true);
+      expect(validateQuestionTopic({ question: 'if (x > 10) print("YES")', options: ['YES', 'NO', 'ERROR', 'NONE'] }, ['conditionals'])).toBe(true);
+      expect(validateQuestionTopic({ question: 'int fact(int n) { if (n <= 1) return 1; return n * fact(n-1); }', options: ['6', '3', '1', '0'] }, ['recursion'])).toBe(true);
+      expect(validateQuestionTopic({ question: 'bool result = (true && false)', options: ['false', 'true', 'null', '1'] }, ['logic'])).toBe(true);
+      expect(validateQuestionTopic({ question: 'Syntax error missing semicolon at end of statement', options: ['Syntax error', 'Loop', 'Variable', 'Array'] }, ['syntax'])).toBe(true);
+      expect(validateQuestionTopic({ question: 'What is the output of 15 % 4 arithmetic operator?', options: ['3', '0', '4', '15'] }, ['basics'])).toBe(true);
+    });
+  });
+
+  describe('GET /api/quiz/practice topic and language enforcement', () => {
+    it('generates practice quiz with 10 questions all matching requested topic (variables, cpp)', async () => {
+      const res = await request(app)
+        .get('/api/quiz/practice?topic=variables&language=cpp')
+        .set('Authorization', `Bearer ${studentToken}`);
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      const quiz = res.body.data.quiz || res.body.data;
+      expect(quiz.questions.length).toBe(10);
+
+      // Verify EVERY question genuinely matches variables
+      quiz.questions.forEach((q) => {
+        const text = `${q.question} ${(q.options || []).join(' ')}`;
+        expect(validateQuestionTopic(q, ['variables'])).toBe(true);
+        // Ensure no array traversal time complexity question bled in
+        expect(text).not.toMatch(/time complexity of traversing an array/i);
+      });
+    });
+
+    it('generates practice quiz with 10 questions matching requested topic (loops, python)', async () => {
+      const res = await request(app)
+        .get('/api/quiz/practice?topic=loops&language=python')
+        .set('Authorization', `Bearer ${studentToken}`);
+
+      expect(res.status).toBe(200);
+      const quiz = res.body.data.quiz || res.body.data;
+      expect(quiz.questions.length).toBe(10);
+      quiz.questions.forEach((q) => {
+        expect(validateQuestionTopic(q, ['loops'])).toBe(true);
+      });
+    });
+  });
 });
+
